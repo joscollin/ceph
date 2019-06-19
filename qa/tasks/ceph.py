@@ -1965,11 +1965,11 @@ def task(ctx, config):
             )
 
             #Try testwatchdog 5 times
-            i = 0
-            while True:
-                if i > 4:
-                    break
-
-                ctx.ceph[config['cluster']].watchdog.stupid_watchdog_tester()
-                sleep(20)
-                i += 1
+            #i = 0
+            #while True:
+            #    if i > 4:
+            #        break
+            log.info('Calling Watchdog Tester')
+            ctx.ceph[config['cluster']].watchdog.stupid_watchdog_tester()
+            sleep(20)
+                #i += 1
