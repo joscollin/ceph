@@ -5,6 +5,6 @@ overrides:
       - \(MON_DOWN\)
 tasks:
 - mon_thrash:
-    check_mds_failover: True
+    check_mds_failover: False
     revive_delay: 20
     thrash_delay: 10
