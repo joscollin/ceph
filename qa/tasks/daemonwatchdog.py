@@ -63,6 +63,8 @@ class DaemonWatchdog(Greenlet):
         daemons.extend(filter(lambda daemon: daemon.running() and not daemon.proc.finished, self.ctx.daemons.iter_daemons_of_role('rgw', cluster=self.cluster)))
         daemons.extend(filter(lambda daemon: daemon.running() and not daemon.proc.finished, self.ctx.daemons.iter_daemons_of_role('mgr', cluster=self.cluster)))
 
+# TODO: rbd-mirror
+
         for daemon in daemons:
             try:
                 daemon.signal(signal.SIGTERM)
