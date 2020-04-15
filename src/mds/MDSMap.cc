@@ -624,7 +624,12 @@ void MDSMap::encode(bufferlist& bl, uint64_t features) const
   }
 
   using ceph::encode;
-  ENCODE_START(6, 4, bl);
+  uint8_t v = 6;
+  if (!HAVE_FEATURE(features, SERVER_PACIFIC)) {
+    v = 5;
+  }
+
+  ENCODE_START(v, 4, bl);
   encode(epoch, bl);
   encode(flags, bl);
   encode(last_failure, bl);
@@ -638,30 +643,56 @@ void MDSMap::encode(bufferlist& bl, uint64_t features) const
   encode(cas_pool, bl);
 
   __u16 ev = 9;
-  encode(ev, bl);
-  {
-    CompatSet _compat;
-    encode(_compat, bl);
+  if (!HAVE_FEATURE(features, SERVER_PACIFIC)){
+    ev = 15;
   }
-  encode((int64_t)0, bl);
+  encode(ev, bl);
+  if (ev == 15) {
+    encode(compat, bl);
+    encode(metadata_pool, bl);
+  }
+  else {
+    {
+      CompatSet _compat;
+      encode(_compat, bl);
+    }
+    encode((int64_t)0, bl);
+  }
   encode(created, bl);
   encode(modified, bl);
-  encode((int32_t)0, bl);
+  if (ev == 15) {
+    encode(tableserver, bl);
+  }
+  else {
+    encode((int32_t)0, bl);
+  }
   encode(in, bl);
   encode(inc, bl);
   encode(up, bl);
   encode(failed, bl);
   encode(stopped, bl);
   encode(last_failure_osd_epoch, bl);
-  encode((uint8_t)0, bl);
-  encode((uint8_t)0, bl);
+  if (ev == 15) {
+    encode(ever_allowed_features, bl);
+    encode(explicitly_allowed_features, bl);
+  }
+  else {
+    encode((uint8_t)0, bl);
+    encode((uint8_t)0, bl);
+  }
   encode(inline_data_enabled, bl);
   encode(enabled, bl);
   encode(fs_name, bl);
   encode(damaged, bl);
+  if (ev == 15) {
+    encode(balancer, bl);
+    encode(standby_count_wanted, bl);
+    encode(old_max_mds, bl);
+    encode(min_compat_client, bl);
+  }
   ENCODE_FINISH(bl);
 
-  {
+  if (HAVE_FEATURE(features, SERVER_PACIFIC)) {
     // ev part
     ENCODE_START(1, 1, bl);
     encode(compat, bl);
