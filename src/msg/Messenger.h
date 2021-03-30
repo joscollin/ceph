@@ -112,8 +112,8 @@ protected:
 public:
   AuthClient *auth_client = 0;
   AuthServer *auth_server = 0;
-  uint64_t dispatch_throttle_bytes;
-  std::chrono::seconds dispatch_throttle_log_interval;
+  std::atomic<uint64_t> dispatch_throttle_bytes;
+  std::atomic<std::chrono::seconds> dispatch_throttle_log_interval;
 
 #ifdef UNIT_TESTS_BUILT
   Interceptor *interceptor = nullptr;
