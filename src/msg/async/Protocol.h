@@ -106,7 +106,7 @@ protected:
   AsyncConnection *connection;
   AsyncMessenger *messenger;
   CephContext *cct;
-  ceph::mono_time throttle_prev = ceph::mono_clock::zero();
+  ceph::coarse_mono_time throttle_prev = ceph::coarse_mono_clock::zero();
 public:
   std::shared_ptr<AuthConnectionMeta> auth_meta;
 
