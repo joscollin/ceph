@@ -1041,6 +1041,11 @@ std::vector<Option> get_global_options() {
     .set_min(0)
     .set_description("Interval in seconds for high verbosity debug log message when the dispatch throttle limit are hit"),
 
+    Option("ms_dispatch_throttle_clog_interval", Option::TYPE_SECS, Option::LEVEL_ADVANCED)
+    .set_default(30)
+    .set_min(0)
+    .set_description("Interval in seconds for the cluster log message when the dispatch throttle limit are hit"),
+
     Option("ms_bind_exclude_lo_iface", Option::TYPE_BOOL, Option::LEVEL_ADVANCED)
     .set_default(true)
     .set_flag(Option::FLAG_STARTUP)

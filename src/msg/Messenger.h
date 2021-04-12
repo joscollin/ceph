@@ -114,6 +114,7 @@ public:
   AuthServer *auth_server = 0;
   std::atomic<uint64_t> dispatch_throttle_bytes;
   std::atomic<std::chrono::seconds> dispatch_throttle_log_interval;
+  std::atomic<std::chrono::seconds> dispatch_throttle_clog_interval;
 
 #ifdef UNIT_TESTS_BUILT
   Interceptor *interceptor = nullptr;
