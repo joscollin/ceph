@@ -1655,16 +1655,23 @@ const char** MonClient::get_tracked_conf_keys() const {
   static const char* KEYS[] = {
     "ms_dispatch_throttle_bytes",
     "ms_dispatch_throttle_log_interval",
+    "ms_dispatch_throttle_clog_interval",
     NULL
   };
   return KEYS;
 }
 
 void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
-  if (changed.count("ms_dispatch_throttle_bytes") || changed.count("ms_dispatch_throttle_log_interval")) {
+  if (changed.count("ms_dispatch_throttle_bytes") ||
+      changed.count("ms_dispatch_throttle_log_interval") ||
+      changed.count("ms_dispatch_throttle_clog_interval")) {
     if (messenger) {
-      messenger->dispatch_throttle_bytes = cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
-      messenger->dispatch_throttle_log_interval = cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
+      messenger->dispatch_throttle_bytes =
+        cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
+      messenger->dispatch_throttle_log_interval =
+        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
+      messenger->dispatch_throttle_clog_interval =
+        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_clog_interval");
     }
   }
 }

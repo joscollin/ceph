@@ -737,8 +737,12 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
                       << "Some message processing may be significantly delayed." << dendl;
         throttle_prev = throttle_now;
       }
-      //Cluster logging that throttling is occurring.
-      msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE);
+      duration = std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog);
+      if (duration >= msgr->dispatch_throttle_clog_interval.load()) {
+        //Cluster logging that throttling is occurring.
+        msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE);
+        throttle_prev_clog = throttle_now;
+      }
       // following thread pool deal with th full message queue isn't a
       // short time, so we can wait a ms.
       if (connection->register_time_events.empty()) {

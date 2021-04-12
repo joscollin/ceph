@@ -1166,6 +1166,12 @@ options:
   desc: Interval in seconds for high verbosity debug log message when the dispatch throttle limit are hit
   default: 30
   min: 0
+- name: ms_dispatch_throttle_clog_interval
+  type: secs
+  level: advanced
+  desc: Interval in seconds for the cluster log message when the dispatch throttle limit are hit
+  default: 30
+  min: 0
 - name: ms_bind_exclude_lo_iface
   type: bool
   level: advanced
