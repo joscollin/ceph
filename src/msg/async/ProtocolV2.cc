@@ -1584,18 +1584,24 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
           << connection->dispatch_queue->dispatch_throttler.get_current() << "/"
           << connection->dispatch_queue->dispatch_throttler.get_max()
           << " failed, just wait." << dendl;
+      std::chrono::seconds configured_interval = msgr->dispatch_throttle_log_interval.load();
       ceph::coarse_mono_time throttle_now = ceph::coarse_mono_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev);
-      if (duration >= msgr->dispatch_throttle_log_interval.load()) {
-        ldout(cct, 1) << __func__ << " Throttler Limit has been hit. "
-                      << "Some message processing may be significantly delayed." << dendl;
-        throttle_prev = throttle_now;
+      if (configured_interval.count()) {
+        if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev) >=
+            configured_interval) {
+          ldout(cct, 1) << __func__ << " Throttler Limit has been hit. "
+                        << "Some message processing may be significantly delayed." << dendl;
+          throttle_prev = throttle_now;
+        }
       }
-      duration = std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog);
-      if (duration >= msgr->dispatch_throttle_clog_interval.load()) {
-        //Cluster logging that throttling is occurring.
-        msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE);
-        throttle_prev_clog = throttle_now;
+      configured_interval = msgr->dispatch_throttle_clog_interval.load();
+      if (configured_interval.count()) {
+        if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
+            configured_interval) {
+          //Cluster logging that throttling is occurring.
+          msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE);
+          throttle_prev_clog = throttle_now;
+        }
       }
       // following thread pool deal with th full message queue isn't a
       // short time, so we can wait a ms.
