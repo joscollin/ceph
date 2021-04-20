@@ -745,7 +745,11 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
         if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
             configured_interval) {
           //Cluster logging that throttling is occurring.
-          msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE);
+          std::ostringstream throttle_info;
+          throttle_info << connection->dispatch_queue->dispatch_throttler.get_current() << "/" <<
+            connection->dispatch_queue->dispatch_throttler.get_max() << " bytes used, " <<
+            connection->dispatch_queue->dispatch_throttler.get_failed() << " messages throttled.";
+          msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE, throttle_info);
           throttle_prev_clog = throttle_now;
         }
       }

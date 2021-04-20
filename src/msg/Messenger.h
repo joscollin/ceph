@@ -821,10 +821,11 @@ public:
    * this function whenever the connections are getting throttled.
    *
    * @param ttype Throttle type
+   * @param tinfo Throttle info
    */
-  void ms_deliver_throttle(ms_throttle_t ttype) {
+  void ms_deliver_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) {
     for (const auto &dispatcher : dispatchers) {
-      if (dispatcher->ms_handle_throttle(ttype))
+      if (dispatcher->ms_handle_throttle(ttype, tinfo))
         return;
     }
   }

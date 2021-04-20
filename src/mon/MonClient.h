@@ -310,7 +310,7 @@ private:
   bool ms_handle_reset(Connection *con) override;
   void ms_handle_remote_reset(Connection *con) override {}
   bool ms_handle_refused(Connection *con) override { return false; }
-  bool ms_handle_throttle(ms_throttle_t ttype) override;
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override;
 
   void handle_monmap(MMonMap *m);
   void handle_config(MConfig *m);
