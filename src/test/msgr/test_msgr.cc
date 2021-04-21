@@ -92,7 +92,7 @@ class MessengerTest : public ::testing::TestWithParam<const char*> {
 
 
 class FakeDispatcher : public Dispatcher {
- public:
+public:
   struct Session : public RefCountedObject {
     atomic<uint64_t> count;
     ConnectionRef con;
@@ -218,7 +218,19 @@ class FakeDispatcher : public Dispatcher {
   int ms_handle_authentication(Connection *con) override {
     return 1;
   }
-
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      if (tinfo && !tinfo.str().empty())
+        return true;
+      return false;
+    default:
+      return false;
+    }
+  }
   void reply_message(Message *m) {
     MPing *rm = new MPing();
     m->get_connection()->send_message(rm);
@@ -1704,6 +1716,20 @@ class SyntheticDispatcher : public Dispatcher {
     }
   }
 
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      if (tinfo && !tinfo.str().empty())
+        return true;
+      return false;
+    default:
+      return false;
+    }
+  }
+
   int ms_handle_authentication(Connection *con) override {
     return 1;
   }
@@ -2196,7 +2222,7 @@ class MarkdownDispatcher : public Dispatcher {
   ceph::mutex lock = ceph::make_mutex("MarkdownDispatcher::lock");
   set<ConnectionRef> conns;
   bool last_mark;
- public:
+public:
   std::atomic<uint64_t> count = { 0 };
   explicit MarkdownDispatcher(bool s): Dispatcher(g_ceph_context),
                               last_mark(false) {
@@ -2264,6 +2290,19 @@ class MarkdownDispatcher : public Dispatcher {
   }
   int ms_handle_authentication(Connection *con) override {
     return 1;
+  }
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      if (tinfo && !tinfo.str().empty())
+        return true;
+      return false;
+    default:
+      return false;
+    }
   }
 };
 
