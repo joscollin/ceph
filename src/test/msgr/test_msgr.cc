@@ -218,7 +218,18 @@ class FakeDispatcher : public Dispatcher {
   int ms_handle_authentication(Connection *con) override {
     return 1;
   }
-
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+      if (tinfo && !tinfo.str().empty())
+	return true;
+      return false;
+    default:
+      return false;
+    }
+  }
   void reply_message(Message *m) {
     MPing *rm = new MPing();
     m->get_connection()->send_message(rm);
@@ -1704,6 +1715,19 @@ class SyntheticDispatcher : public Dispatcher {
     }
   }
 
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+      if (tinfo && !tinfo.str().empty())
+	return true;
+      return false;
+    default:
+      return false;
+    }
+  }
+
   int ms_handle_authentication(Connection *con) override {
     return 1;
   }
@@ -2264,6 +2288,18 @@ class MarkdownDispatcher : public Dispatcher {
   }
   int ms_handle_authentication(Connection *con) override {
     return 1;
+  }
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+      if (tinfo && !tinfo.str().empty())
+	return true;
+      return false;
+    default:
+      return false;
+    }
   }
 };
 
