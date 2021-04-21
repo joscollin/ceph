@@ -102,7 +102,7 @@ class MessengerTest : public ::testing::TestWithParam<const char*> {
 
 
 class FakeDispatcher : public Dispatcher {
- public:
+public:
   struct Session : public RefCountedObject {
     std::atomic<uint64_t> count;
     ConnectionRef con;
@@ -229,6 +229,17 @@ class FakeDispatcher : public Dispatcher {
     return true;
   }
 
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      return true;
+    default:
+      return false;
+    }
+  }
   void reply_message(Message *m) {
     MPing *rm = new MPing();
     m->get_connection()->send_message(rm);
@@ -1736,7 +1747,7 @@ ostream& operator<<(ostream& out, const Payload &pl)
 }
 
 class SyntheticDispatcher : public Dispatcher {
- public:
+public:
   ceph::mutex lock = ceph::make_mutex("SyntheticDispatcher::lock");
   ceph::condition_variable cond;
   bool is_server;
@@ -1832,6 +1843,18 @@ class SyntheticDispatcher : public Dispatcher {
 
   bool ms_handle_fast_authentication(Connection *con) override {
     return true;
+  }
+
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      return true;
+    default:
+      return false;
+    }
   }
 
   void reply_message(const Message *m, Payload& pl) {
@@ -2377,7 +2400,7 @@ class MarkdownDispatcher : public Dispatcher {
   ceph::mutex lock = ceph::make_mutex("MarkdownDispatcher::lock");
   set<ConnectionRef> conns;
   bool last_mark;
- public:
+public:
   std::atomic<uint64_t> count = { 0 };
   explicit MarkdownDispatcher(bool s): Dispatcher(g_ceph_context),
                               last_mark(false) {
@@ -2445,6 +2468,17 @@ class MarkdownDispatcher : public Dispatcher {
   }
   bool ms_handle_fast_authentication(Connection *con) override {
     return true;
+  }
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
+    switch(ttype) {
+    case ms_throttle_t::MESSAGE:
+    case ms_throttle_t::BYTES:
+    case ms_throttle_t::DISPATCH_QUEUE:
+    case ms_throttle_t::NONE:
+      return true;
+    default:
+      return false;
+    }
   }
 };
 
