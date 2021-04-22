@@ -7812,6 +7812,7 @@ vector<DaemonHealthMetric> OSD::get_health_metrics()
     }
     metrics.emplace_back(daemon_metric::PENDING_CREATING_PGS, n_primaries);
   }
+  monc->get_health_metrics(metrics);
   return metrics;
 }
 
