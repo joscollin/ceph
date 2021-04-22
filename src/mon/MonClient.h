@@ -34,6 +34,7 @@
 
 #include "auth/AuthClient.h"
 #include "auth/AuthServer.h"
+#include "mgr/DaemonHealthMetric.h"
 
 class MMonMap;
 class MConfig;
@@ -303,6 +304,7 @@ private:
 
   LogClient *log_client;
   bool more_log_pending;
+  bool dispatch_queue_throttle=false;
 
   void send_log(bool flush = false);
 
@@ -510,6 +512,7 @@ public:
   void send_mon_message(Message *m) {
     send_mon_message(MessageRef{m, false});
   }
+  void get_health_metrics(vector<DaemonHealthMetric>&);
   void send_mon_message(MessageRef m);
   /**
    * If you specify a callback, you should not call
