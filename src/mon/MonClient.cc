@@ -864,6 +864,7 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream
     break; // TODO
   case ms_throttle_t::DISPATCH_QUEUE:
     {
+      last_throttled.store(ceph::coarse_mono_clock::now());
       //cluster log a warning that Dispatch Queue Throttle Limit hit
       if (!log_client) {
         return false; //cannot handle if the daemon didn't setup a log_client for me
@@ -872,6 +873,11 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream
       clog->warn() << "Throttler Limit has been hit. "
                    << "Some message processing may be significantly delayed. "
                    << "Additional info: " << tinfo.str();
+    }
+    break;
+  case ms_throttle_t::NONE:
+    {
+      last_throttled.store(ceph::coarse_mono_clock::zero());
     }
     break;
   default:
@@ -993,6 +999,18 @@ void MonClient::tick()
       last_send_log = now;
     }
   }
+}
+
+void MonClient::get_health_metrics(vector<DaemonHealthMetric>& metrics)
+{
+  if (last_throttled.load() == ceph::coarse_mono_clock::zero()) {
+    lderr(cct) << __func__ << " No Throttling" << dendl;
+    metrics.emplace_back(daemon_metric::NONE, 0);
+  } else {
+    lderr(cct) << __func__ << " Dispatch Queue Throttling" << dendl;
+    metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, 100);
+  }
+  return;
 }
 
 void MonClient::_un_backoff()
@@ -1652,14 +1670,21 @@ const char** MonClient::get_tracked_conf_keys() const {
 }
 
 void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
-  if (changed.count("ms_dispatch_throttle_bytes") ||
-      changed.count("ms_dispatch_throttle_log_interval") ||
-      changed.count("ms_dispatch_throttle_clog_interval")) {
+  ldout(cct, 10) << __func__ << " " << changed << dendl;
+  if (changed.count("ms_dispatch_throttle_bytes")) {
     if (messenger) {
       messenger->dispatch_throttle_bytes =
         cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
+    }
+  }
+  if (changed.count("ms_dispatch_throttle_log_interval")) {
+    if (messenger) {
       messenger->dispatch_throttle_log_interval =
         cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
+    }
+  }
+  if (changed.count("ms_dispatch_throttle_clog_interval")) {
+    if (messenger) {
       messenger->dispatch_throttle_clog_interval =
         cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_clog_interval");
     }

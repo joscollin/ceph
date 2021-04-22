@@ -1616,6 +1616,11 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
       }
       return nullptr;
     }
+    else {
+      std::ostringstream throttle_info;
+      throttle_info << "No Throttling";
+      msgr->ms_deliver_throttle(ms_throttle_t::NONE, throttle_info);
+    }
   }
 
   throttle_stamp = ceph_clock_now();
