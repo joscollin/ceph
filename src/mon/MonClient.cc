@@ -874,6 +874,8 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream
                    << "Additional info: " << tinfo.str();
     }
     break;
+  case ms_throttle_t::NONE:
+    break;
   default:
     return false;
   }
@@ -994,7 +996,6 @@ void MonClient::tick()
     }
   }
 }
-
 void MonClient::_un_backoff()
 {
   // un-backoff our reconnect interval
@@ -1652,14 +1653,21 @@ const char** MonClient::get_tracked_conf_keys() const {
 }
 
 void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
-  if (changed.count("ms_dispatch_throttle_bytes") ||
-      changed.count("ms_dispatch_throttle_log_interval") ||
-      changed.count("ms_dispatch_throttle_clog_interval")) {
+  ldout(cct, 10) << __func__ << " " << changed << dendl;
+  if (changed.count("ms_dispatch_throttle_bytes")) {
     if (messenger) {
       messenger->dispatch_throttle_bytes =
         cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
+    }
+  }
+  if (changed.count("ms_dispatch_throttle_log_interval")) {
+    if (messenger) {
       messenger->dispatch_throttle_log_interval =
         cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
+    }
+  }
+  if (changed.count("ms_dispatch_throttle_clog_interval")) {
+    if (messenger) {
       messenger->dispatch_throttle_clog_interval =
         cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_clog_interval");
     }

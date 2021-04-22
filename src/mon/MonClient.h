@@ -34,6 +34,7 @@
 
 #include "auth/AuthClient.h"
 #include "auth/AuthServer.h"
+#include "mgr/DaemonHealthMetric.h"
 
 class MMonMap;
 class MConfig;

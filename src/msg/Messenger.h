@@ -825,8 +825,7 @@ public:
    */
   void ms_deliver_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) {
     for (const auto &dispatcher : dispatchers) {
-      if (dispatcher->ms_handle_throttle(ttype, tinfo))
-        return;
+      dispatcher->ms_handle_throttle(ttype, tinfo);
     }
   }
 

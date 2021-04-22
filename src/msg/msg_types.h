@@ -784,7 +784,8 @@ inline std::ostream& operator<<(std::ostream& out, const ceph_entity_inst &i)
 enum class ms_throttle_t {
     MESSAGE,
     BYTES,
-    DISPATCH_QUEUE
+    DISPATCH_QUEUE,
+    NONE
 };
 
 #endif
