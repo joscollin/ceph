@@ -856,6 +856,12 @@ bool MonClient::ms_handle_reset(Connection *con)
   }
 }
 
+/*bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo,
+				   const ceph::coarse_mono_time& last_throttled) {
+  this->last_throttled = last_throttled;
+  return handle_throttle(ttype, tinfo);
+  }*/
+
 bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
@@ -864,7 +870,6 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream
     break; // TODO
   case ms_throttle_t::DISPATCH_QUEUE:
     {
-      dispatch_queue_throttle = true;
       //cluster log a warning that Dispatch Queue Throttle Limit hit
       if (!log_client) {
         return false; //cannot handle if the daemon didn't setup a log_client for me
@@ -873,11 +878,6 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream
       clog->warn() << "Throttler Limit has been hit. "
                    << "Some message processing may be significantly delayed. "
                    << "Additional info: " << tinfo.str();
-    }
-    break;
-  case ms_throttle_t::NONE:
-    {
-      dispatch_queue_throttle = false;
     }
     break;
   default:
@@ -1003,11 +1003,13 @@ void MonClient::tick()
 
 void MonClient::get_health_metrics(vector<DaemonHealthMetric>& metrics)
 {
-  if (dispatch_queue_throttle) {
-    lderr(cct) << __func__ << " Dispatch Queue Throttling" << dendl;
-    metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, 100);
-  } else {
-    metrics.emplace_back(daemon_metric::NONE, 0);
+  if (messenger) {
+    if (messenger->get_last_throttled().load() == ceph::coarse_mono_clock::zero()) {
+      metrics.emplace_back(daemon_metric::NONE, 0);
+    } else {
+      lderr(cct) << __func__ << " Dispatch Queue Throttling" << dendl;
+      metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, 100);
+    }
   }
   return;
 }

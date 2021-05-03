@@ -91,6 +91,7 @@ private:
   std::deque<Dispatcher*> dispatchers;
   std::deque<Dispatcher*> fast_dispatchers;
   ZTracer::Endpoint trace_endpoint;
+  std::atomic<ceph::coarse_mono_time> last_throttled {ceph::coarse_mono_clock::zero()};
 
 protected:
   void set_endpoint_addr(const entity_addr_t& a,
@@ -816,6 +817,9 @@ public:
   void set_require_authorizer(bool b) {
     require_authorizer = b;
   }
+  std::atomic<ceph::coarse_mono_time>& get_last_throttled() {
+    return last_throttled;
+  }
   /**
    * Notify each Dispatcher that the Throttle Limit has been hit. Call
    * this function whenever the connections are getting throttled.
@@ -824,7 +828,17 @@ public:
    * @param tinfo Throttle info
    */
   void ms_deliver_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) {
+    if (ttype == ms_throttle_t::NONE) {
+      last_throttled = ceph::coarse_mono_clock::zero();
+      return; //timestamp recorded, so return as handled.
+    }
+    else {
+      //some kind of throttling: Message, Bytes or Dispatch Queue
+      last_throttled = ceph::coarse_mono_clock::now();
+    }
+
     for (const auto &dispatcher : dispatchers) {
+      //if (dispatcher->ms_handle_throttle(ttype, tinfo, last_throttled))
       if (dispatcher->ms_handle_throttle(ttype, tinfo))
         return;
     }

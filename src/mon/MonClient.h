@@ -304,7 +304,7 @@ private:
 
   LogClient *log_client;
   bool more_log_pending;
-  std::atomic_bool dispatch_queue_throttle=false;
+  //std::atomic<ceph::coarse_mono_time> last_throttled=ceph::coarse_mono_clock::zero();
 
   void send_log(bool flush = false);
 
@@ -313,6 +313,8 @@ private:
   void ms_handle_remote_reset(Connection *con) override {}
   bool ms_handle_refused(Connection *con) override { return false; }
   bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override;
+  //  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo,
+  //			  const ceph::coarse_mono_time& last_throttled) override;
 
   void handle_monmap(MMonMap *m);
   void handle_config(MConfig *m);
