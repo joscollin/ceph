@@ -762,6 +762,9 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
       }
       return nullptr;
     }
+    else {
+      msgr->ms_deliver_throttle(ms_throttle_t::NONE);
+    }
   }
 
   throttle_stamp = ceph_clock_now();

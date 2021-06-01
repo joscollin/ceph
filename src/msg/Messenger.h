@@ -830,6 +830,18 @@ public:
   }
 
   /**
+   * Calls ms_deliver_throttle with empty tinfo.
+   * Call this function for a reset status update that doesn't need tinfo.
+   *
+   * @param ttype Throttle type
+   */
+  void ms_deliver_throttle(ms_throttle_t ttype) {
+    std::ostringstream tinfo;
+    tinfo.str("");
+    ms_deliver_throttle(ttype, tinfo);
+  }
+
+  /**
    * @} // Dispatcher Interfacing
    */
 };
