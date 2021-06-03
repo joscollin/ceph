@@ -6492,7 +6492,7 @@ bool OSD::ms_handle_refused(Connection *con)
   return true;
 }
 
-bool OSD::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) {
+bool OSD::ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
     break; // TODO
@@ -6500,8 +6500,9 @@ bool OSD::ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinf
     break; // TODO
   case ms_throttle_t::DISPATCH_QUEUE:
     {
-      //save the latest throttled time
+      //save the latest throttled time, save the number of messages throttled.
       last_throttled.store(ceph::coarse_mono_clock::now());
+      messages_throttled = tinfo.at("failedrequests");
     }
     break;
   case ms_throttle_t::NONE:
@@ -7970,7 +7971,7 @@ vector<DaemonHealthMetric> OSD::get_health_metrics()
   }
   {
     if (last_throttled.load() != ceph::coarse_mono_clock::zero()) {
-      metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, 1);
+      metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, messages_throttled);
     }
   }
   return metrics;
