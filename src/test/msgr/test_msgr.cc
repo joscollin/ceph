@@ -229,7 +229,7 @@ public:
     return true;
   }
 
-  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
     switch(ttype) {
     case ms_throttle_t::MESSAGE:
     case ms_throttle_t::BYTES:
@@ -1845,7 +1845,7 @@ public:
     return true;
   }
 
-  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
     switch(ttype) {
     case ms_throttle_t::MESSAGE:
     case ms_throttle_t::BYTES:
@@ -2469,7 +2469,7 @@ public:
   bool ms_handle_fast_authentication(Connection *con) override {
     return true;
   }
-  bool ms_handle_throttle(ms_throttle_t ttype, const std::ostringstream& tinfo) override {
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override {
     switch(ttype) {
     case ms_throttle_t::MESSAGE:
     case ms_throttle_t::BYTES:
