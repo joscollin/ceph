@@ -101,7 +101,7 @@ class DispatchQueueThrottle final : public DaemonHealthMetricCollector {
     return cm.get_or_add("DISPATCH_QUEUE_THROTTLE", HEALTH_WARN, "", 1);
   }
   bool _update(const DaemonKey& daemon, const DaemonHealthMetric& metric) override {
-    value.n += metric.get_n();
+    value.n = metric.get_n();
     if (metric.get_n()) {
       daemons.push_back(daemon);
       return true;
@@ -113,7 +113,7 @@ class DispatchQueueThrottle final : public DaemonHealthMetricCollector {
     if (daemons.empty()) {
       return;
     }
-    check.summary = fmt::format("{} Dispatch Queue Throttling", value.n);
+    check.summary = fmt::format("Dispatch Queue Throttling, {} messages throttled.", value.n);
   }
   vector<DaemonKey> daemons;
 };
