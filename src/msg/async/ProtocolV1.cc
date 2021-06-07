@@ -763,10 +763,10 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
       return nullptr;
     }
     else {
-      //Don't deliver ms_throttle_t::NONE forever. Limit it for THROTTLE_STATUS_INTERVAL seconds
+      //Don't deliver ms_throttle_t::NONE forever. Limit it for THROTTLE_DELIVER_INTERVAL seconds
       //since the last ms_throttle_t::DISPATCH_QUEUE delivery.
       if (std::chrono::duration_cast<std::chrono::seconds>
-          (ceph::coarse_mono_clock::now() - throttle_prev_clog) <= THROTTLE_STATUS_INTERVAL.load()) {
+          (ceph::coarse_mono_clock::now() - throttle_prev_clog) <= THROTTLE_DELIVER_INTERVAL) {
         msgr->ms_deliver_throttle(ms_throttle_t::NONE);
       }
     }
