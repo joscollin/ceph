@@ -386,28 +386,36 @@ class FSTop(object):
                 self.run_all_display()
             else:
                 self.run_display()
+        elif key_stroke == curses.KEY_RESIZE:
+            self.draw_limit_screen()
         return 0
 
-    def set_limit(self, stdscr):
-        stdscr.clear()
-        height, width = stdscr.getmaxyx()
+    def draw_limit_screen(self):
+        self.stdscr.clear()
+        height, width = self.stdscr.getmaxyx()
         title = 'Enter the limit you want to set (number) and press ENTER,'\
             ' press "d" for default, "q" to go back to previous screen '
         pos_x1 = width // 2 - len(title) // 2
         try:
-            stdscr.addstr(1, pos_x1, title, curses.A_STANDOUT | curses.A_BOLD)
+            self.stdscr.addstr(1, pos_x1, title, curses.A_STANDOUT | curses.A_BOLD)
         except curses.error:
             pass
 
         center = int(width/2)
         # create a box inside the rectangle
-        win = curses.newwin(1, 4, 4, center - 3)
-        box = Textbox(win)
-        rectangle(stdscr, 3, center - 5, 5, center + 5)
-        stdscr.refresh()
+        self.win = curses.newwin(1, 4, 4, center - 3)
+        self.box = Textbox(self.win)
+        rectangle(self.stdscr, 3, center - 5, 5, center + 5)
+        self.stdscr.refresh()
         curses.curs_set(2)
-        box.edit(self.limit_validator)
-        limit = box.gather().strip()
+        try:
+            self.box.edit(self.limit_validator)
+        except curses.error:
+            pass
+
+    def set_limit(self, stdscr):
+        self.draw_limit_screen()
+        limit = self.box.gather().strip()
         current_states["limit"] = limit # user input limit set
 
         if isinstance(current_states['last_fs'], list):
