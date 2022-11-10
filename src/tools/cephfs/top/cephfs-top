@@ -14,6 +14,7 @@ from collections import OrderedDict
 from datetime import datetime
 from enum import Enum, unique
 from curses import ascii
+from curses.textpad import Textbox, rectangle
 
 import rados
 
@@ -374,88 +375,45 @@ class FSTop(object):
             curses.halfdelay(self.refresh_interval_secs)
             key = stdscr.getch()
 
+    def limit_validator(self, key_stroke):
+        if key_stroke >= 49 and key_stroke <= 57 \
+           or key_stroke == 263 or key_stroke == 10:
+            return key_stroke
+        elif key_stroke == 113 or key_stroke == 100:
+            if key_stroke == 100:  # 'd'
+                current_states["limit"] = None
+            if isinstance(current_states['last_fs'], list):
+                self.run_all_display()
+            else:
+                self.run_display()
+        return 0
+
     def set_limit(self, stdscr):
-        key = ''
-        endwhile = False
-        while not endwhile:
-            stdscr.clear()
-            h, w = stdscr.getmaxyx()
-            title = 'Enter the limit you want to set (number) and press ENTER,'\
-                    ' press "d" for default, "q" to go back to previous screen '
-            pos_x1 = w // 2 - len(title) // 2
-            try:
-                stdscr.addstr(1, pos_x1, title, curses.A_STANDOUT | curses.A_BOLD)
-            except curses.error:
-                pass
-            curses.halfdelay(self.refresh_interval_secs)
-            inp = stdscr.getch()
-            if inp in [ord('d'), ord('q')] or ascii.isdigit(inp):
-                key = key + chr(inp)
-                if key == 'd':
-                    current_states["limit"] = None
-                elif key == 'q':
-                    endwhile = True
-                elif (key).isnumeric():
-                    i = 1
-                    length = 4
-                    while i <= length:
-                        pos = w // 2 - len(key) // 2
-                        try:
-                            stdscr.move(3, 0)
-                            stdscr.clrtoeol()
-                            stdscr.addstr(3, pos, key, curses.A_BOLD)
-                        except curses.error:
-                            pass
-                        if key[i - 1] == '\n':
-                            break
-                        inp = stdscr.getch()
-                        if inp == ord('q'):
-                            if current_states['limit'] is None:
-                                key = current_states["limit"]
-                            else:
-                                key = current_states['limit'] + " "
-                            break
-                        if inp == curses.KEY_RESIZE:
-                            stdscr.clear()
-                            windowsize = stdscr.getmaxyx()
-                            wd = windowsize[1] - 1
-                            pos_x1 = wd // 2 - len(title) // 2
-                            try:
-                                stdscr.addstr(1, pos_x1, title, curses.A_STANDOUT | curses.A_BOLD)
-                            except curses.error:
-                                pass
-                        if inp == curses.KEY_BACKSPACE or inp == curses.KEY_DC or inp == 127:
-                            if i > 1:
-                                key = key[:-1]
-                                i = i - 1
-                                stdscr.move(4, 0)
-                                stdscr.clrtoeol()
-                            elif i == 1:
-                                curses.wrapper(self.set_limit)
-                        elif i == length:
-                            if inp == ord('\n'):
-                                key = key + chr(inp)
-                                i = i + 1
-                            else:
-                                info = "Max length is reached, press Backspace" \
-                                    " to edit or Enter to set the limit!"
-                                pos = w // 2 - len(info) // 2
-                                try:
-                                    stdscr.addstr(4, pos, info, curses.A_BOLD)
-                                except curses.error:
-                                    pass
-                        elif ascii.isdigit(inp) or inp == ord('\n'):
-                            key = key + chr(inp)
-                            i = i + 1
-                    if key is None:
-                        current_states["limit"] = key
-                    elif int(key) != 0:
-                        current_states["limit"] = key[:-1]
-                self.stdscr.erase()
-                if isinstance(current_states['last_fs'], list):
-                    self.run_all_display()
-                else:
-                    self.run_display()
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+        title = 'Enter the limit you want to set (number) and press ENTER,'\
+            ' press "d" for default, "q" to go back to previous screen '
+        pos_x1 = width // 2 - len(title) // 2
+        try:
+            stdscr.addstr(1, pos_x1, title, curses.A_STANDOUT | curses.A_BOLD)
+        except curses.error:
+            pass
+
+        center = int(width/2)
+        # create a box inside the rectangle
+        win = curses.newwin(1, 4, 4, center - 3)
+        box = Textbox(win)
+        rectangle(stdscr, 3, center - 5, 5, center + 5)
+        stdscr.refresh()
+        curses.curs_set(2)
+        box.edit(self.limit_validator)
+        limit = box.gather().strip()
+        current_states["limit"] = limit # user input limit set
+
+        if isinstance(current_states['last_fs'], list):
+            self.run_all_display()
+        else:
+            self.run_display()
 
     def set_option(self, opt):
         if opt == ord('m'):
