@@ -7,13 +7,18 @@ import errno
 import json
 import signal
 import time
-import math
 import threading
 
-from collections import OrderedDict
 from datetime import datetime
-from enum import Enum, unique
 from curses import ascii
+from fstopbase import FSTopBase, GLOBAL_METRICS_KEY, CLIENT_METADATA_KEY,\
+    CLIENT_METADATA_MOUNT_POINT_KEY, MAIN_WINDOW_TOP_LINE_ITEMS_START,\
+    MAIN_WINDOW_TOP_LINE_METRICS, MAIN_WINDOW_TOP_LINE_METRICS_LEGACY,\
+    MetricType, MAIN_WINDOW_TOP_LINE_ITEMS_END, ITEMS_PAD, GLOBAL_COUNTERS_KEY,\
+    ITEMS_PAD_LEN, FS_TOP_MAIN_WINDOW_COL_CLIENT_ID, FS_TOP_MAIN_WINDOW_COL_MNT_ROOT,\
+    CLIENT_METADATA_MOUNT_ROOT_KEY, MGR_STATS_COUNTERS, CLIENT_METADATA_VALID_METRICS_KEY,\
+    FS_TOP_MAIN_WINDOW_COL_MNTPT_HOST_ADDR, CLIENT_METADATA_HOSTNAME_KEY, CLIENT_METADATA_IP_KEY
+from fstopbase import calc_perc, calc_lat, calc_stdev, calc_size, calc_avg_size, calc_speed, wrap
 
 import rados
 
@@ -26,15 +31,6 @@ class FSTopException(Exception):
         return self.error_msg
 
 
-@unique
-class MetricType(Enum):
-    METRIC_TYPE_NONE = 0
-    METRIC_TYPE_PERCENTAGE = 1
-    METRIC_TYPE_LATENCY = 2
-    METRIC_TYPE_SIZE = 3
-    METRIC_TYPE_STDEV = 4
-
-
 FS_TOP_PROG_STR = 'cephfs-top'
 FS_TOP_ALL_FS_APP = 'ALL_FS_APP'
 FS_TOP_FS_SELECTED_APP = 'SELECTED_FS_APP'
@@ -42,67 +38,14 @@ FS_TOP_FS_SELECTED_APP = 'SELECTED_FS_APP'
 # version match b/w fstop and stats emitted by mgr/stats
 FS_TOP_SUPPORTED_VER = 2
 
-ITEMS_PAD_LEN = 3
-ITEMS_PAD = " " * ITEMS_PAD_LEN
 DEFAULT_REFRESH_INTERVAL = 1
 # min refresh interval allowed
 MIN_REFRESH_INTERVAL = 0.5
-
-# metadata provided by mgr/stats
-FS_TOP_MAIN_WINDOW_COL_CLIENT_ID = "client_id"
-FS_TOP_MAIN_WINDOW_COL_MNT_ROOT = "mount_root"
-FS_TOP_MAIN_WINDOW_COL_MNTPT_HOST_ADDR = "mount_point@host/addr"
-
-MAIN_WINDOW_TOP_LINE_ITEMS_START = [ITEMS_PAD,
-                                    FS_TOP_MAIN_WINDOW_COL_CLIENT_ID,
-                                    FS_TOP_MAIN_WINDOW_COL_MNT_ROOT]
-MAIN_WINDOW_TOP_LINE_ITEMS_END = [FS_TOP_MAIN_WINDOW_COL_MNTPT_HOST_ADDR]
-
-MAIN_WINDOW_TOP_LINE_METRICS_LEGACY = ["READ_LATENCY",
-                                       "WRITE_LATENCY",
-                                       "METADATA_LATENCY"
-                                       ]
-
-# adjust this map according to stats version and maintain order
-# as emitted by mgr/stast
-MAIN_WINDOW_TOP_LINE_METRICS = OrderedDict([
-    ("CAP_HIT", MetricType.METRIC_TYPE_PERCENTAGE),
-    ("READ_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("WRITE_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("METADATA_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("DENTRY_LEASE", MetricType.METRIC_TYPE_PERCENTAGE),
-    ("OPENED_FILES", MetricType.METRIC_TYPE_NONE),
-    ("PINNED_ICAPS", MetricType.METRIC_TYPE_NONE),
-    ("OPENED_INODES", MetricType.METRIC_TYPE_NONE),
-    ("READ_IO_SIZES", MetricType.METRIC_TYPE_SIZE),
-    ("WRITE_IO_SIZES", MetricType.METRIC_TYPE_SIZE),
-    ("AVG_READ_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("STDEV_READ_LATENCY", MetricType.METRIC_TYPE_STDEV),
-    ("AVG_WRITE_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("STDEV_WRITE_LATENCY", MetricType.METRIC_TYPE_STDEV),
-    ("AVG_METADATA_LATENCY", MetricType.METRIC_TYPE_LATENCY),
-    ("STDEV_METADATA_LATENCY", MetricType.METRIC_TYPE_STDEV),
-])
-MGR_STATS_COUNTERS = list(MAIN_WINDOW_TOP_LINE_METRICS.keys())
 
 FS_TOP_VERSION_HEADER_FMT = '{prog_name} - {now}'
 FS_TOP_CLIENT_HEADER_FMT = 'Total Client(s): {num_clients} - '\
     '{num_mounts} FUSE, {num_kclients} kclient, {num_libs} libcephfs'
 FS_TOP_NAME_TOPL_FMT = 'Filesystem: {fs_name} - {client_count} client(s)'
-
-CLIENT_METADATA_KEY = "client_metadata"
-CLIENT_METADATA_MOUNT_POINT_KEY = "mount_point"
-CLIENT_METADATA_MOUNT_ROOT_KEY = "root"
-CLIENT_METADATA_IP_KEY = "IP"
-CLIENT_METADATA_HOSTNAME_KEY = "hostname"
-CLIENT_METADATA_VALID_METRICS_KEY = "valid_metrics"
-
-GLOBAL_METRICS_KEY = "global_metrics"
-GLOBAL_COUNTERS_KEY = "global_counters"
-
-last_time = time.time()
-last_read_size = {}
-last_write_size = {}
 
 fs_list = []
 # store the current states of cephfs-top
@@ -113,51 +56,9 @@ current_states = {"last_fs": "", "last_field": 'chit', "limit": None}
 metrics_dict = {}
 
 
-def calc_perc(c):
-    if c[0] == 0 and c[1] == 0:
-        return 0.0
-    return round((c[0] / (c[0] + c[1])) * 100, 2)
-
-
-def calc_lat(c):
-    return round(c[0] * 1000 + c[1] / 1000000, 2)
-
-
-def calc_stdev(c):
-    stdev = 0.0
-    if c[1] > 1:
-        stdev = math.sqrt(c[0] / (c[1] - 1)) / 1000000
-    return round(stdev, 2)
-
-
-# in MB
-def calc_size(c):
-    return round(c[1] / (1024 * 1024), 2)
-
-
-# in MB
-def calc_avg_size(c):
-    if c[0] == 0:
-        return 0.0
-    return round(c[1] / (c[0] * 1024 * 1024), 2)
-
-
-# in MB/s
-def calc_speed(size, duration):
-    if duration == 0:
-        return 0.0
-    return round(size / (duration * 1024 * 1024), 2)
-
-
-def wrap(s, sl):
-    """return a '+' suffixed wrapped string"""
-    if len(s) < sl:
-        return s
-    return f'{s[0:sl-1]}+'
-
-
-class FSTop(object):
+class FSTop(FSTopBase):
     def __init__(self, args):
+        super(FSTop, self).__init__()
         self.rados = None
         self.stdscr = None  # curses instance
         self.active_screen = ""
@@ -607,17 +508,6 @@ class FSTop(object):
             # return empty string for none type
             return ''
 
-    @staticmethod
-    def has_metric(metadata, metrics_key):
-        return metrics_key in metadata
-
-    @staticmethod
-    def has_metrics(metadata, metrics_keys):
-        for key in metrics_keys:
-            if not FSTop.has_metric(metadata, key):
-                return False
-        return True
-
     def create_table_header(self):  # formerly named as top_line
         heading = []
         for item in MAIN_WINDOW_TOP_LINE_ITEMS_START:
@@ -645,12 +535,11 @@ class FSTop(object):
 
     def create_client(self, fs_name, client_id, metrics, counters,
                       client_meta, y_coord):
-        global last_time
         metrics_dict.setdefault(fs_name, {})
         metrics_dict[fs_name].setdefault(client_id, {})
         cur_time = time.time()
-        duration = cur_time - last_time
-        last_time = cur_time
+        duration = cur_time - self.last_time
+        self.last_time = cur_time
         xp = 0  # xp is incremented after each addstr to position the next incoming metrics.
         for item in MAIN_WINDOW_TOP_LINE_ITEMS_START:  # note: the first item is ITEMS_PAD
             hlen = len(item) + ITEMS_PAD_LEN
@@ -714,16 +603,14 @@ class FSTop(object):
                     size = 0
                     if key == "READ_IO_SIZES":
                         if m[1] > 0:
-                            global last_read_size
-                            last_size = last_read_size.get(client_id, 0)
+                            last_size = self.last_read_size.get(client_id, 0)
                             size = m[1] - last_size
-                            last_read_size[client_id] = m[1]
+                            self.last_read_size[client_id] = m[1]
                     if key == "WRITE_IO_SIZES":
                         if m[1] > 0:
-                            global last_write_size
-                            last_size = last_write_size.get(client_id, 0)
+                            last_size = self.last_write_size.get(client_id, 0)
                             size = m[1] - last_size
-                            last_write_size[client_id] = m[1]
+                            self.last_write_size[client_id] = m[1]
                     speed = calc_speed(abs(size), duration)
                     metrics_dict[fs_name][client_id][self.speed_items(key)] = speed
                     self.fsstats.addstr(y_coord, xp,
@@ -1112,6 +999,10 @@ if __name__ == '__main__':
                         type=float_greater_than,
                         help='Refresh interval in seconds '
                         f'(default: {DEFAULT_REFRESH_INTERVAL})')
+    parser.add_argument('--dump', dest='dump', action='store_true',
+                        help='Dump the values to stdout')
+    parser.add_argument('--dumponce', dest='dumponce', action='store_true',
+                        help='Dump the values once to stdout')
 
     args = parser.parse_args()
     err = False
@@ -1121,6 +1012,11 @@ if __name__ == '__main__':
         if args.selftest:
             ft.selftest()
             sys.stdout.write("selftest ok\n")
+        elif args.dump:
+            ft.dump_values_to_stdout()
+        elif args.dumponce:
+            ft.dump_once = True
+            ft.dump_values_to_stdout()
         else:
             curses.wrapper(ft.setup_curses)
     except FSTopException as fst:
