@@ -44,6 +44,14 @@ Options
 
    Refresh interval in seconds (default: 1)
 
+.. option:: --dump
+
+   Dump the values to stdout
+
+.. option:: --dumpfs <fs_name>
+
+   Dump the values of the given fs to stdout
+
 Descriptions of fields
 ======================
 
