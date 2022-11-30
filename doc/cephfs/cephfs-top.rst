@@ -80,6 +80,14 @@ By default, `cephfs-top` connects to cluster name `ceph`. To use a non-default c
 
 Interval should be greater than or equal to 0.5 seconds. Fractional seconds are honoured.
 
+To dump the values every `refresh interval` to stdout without creating a curses display use::
+
+  $ cephfs-top --dump
+
+To dump the values once to stdout without creating a curses display use::
+
+  $ cephfs-top --dumponce
+
 Interactive Commands
 --------------------
 

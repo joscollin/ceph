@@ -44,6 +44,14 @@ Options
 
    Refresh interval in seconds (default: 1)
 
+.. option:: --dump
+
+   Dump the values every ``refresh interval`` to stdout
+
+.. option:: --dumponce
+
+   Dump the values once to stdout
+
 Descriptions of fields
 ======================
 
