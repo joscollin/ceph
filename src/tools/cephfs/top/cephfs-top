@@ -1003,6 +1003,7 @@ if __name__ == '__main__':
                         help='Dump the values to stdout')
     parser.add_argument('--dumponce', dest='dumponce', action='store_true',
                         help='Dump the values once to stdout')
+    parser.add_argument('--dumpfs', action='append', help='Dump the fs values to stdout')
 
     args = parser.parse_args()
     err = False
@@ -1017,6 +1018,8 @@ if __name__ == '__main__':
         elif args.dumponce:
             ft.dump_once = True
             ft.dump_values_to_stdout()
+        elif args.dumpfs:
+            ft.dump_values_to_stdout(args.dumpfs[0])
         else:
             curses.wrapper(ft.setup_curses)
     except FSTopException as fst:
