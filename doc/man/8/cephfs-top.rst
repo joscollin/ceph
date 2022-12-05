@@ -52,6 +52,10 @@ Options
 
    Dump the values once to stdout
 
+.. option:: --dumpfs <fs_name>
+
+   Dump the given fs values every ``refresh interval`` to stdout
+
 Descriptions of fields
 ======================
 

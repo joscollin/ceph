@@ -88,6 +88,10 @@ To dump the values once to stdout without creating a curses display use::
 
   $ cephfs-top --dumponce
 
+To dump the values of the given filesystem every `refresh interval` to stdout without creating a curses display use::
+
+  $ cephfs-top --dumpfs <fs_name>
+
 Interactive Commands
 --------------------
 
