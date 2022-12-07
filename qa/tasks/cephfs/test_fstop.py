@@ -26,10 +26,11 @@ class TestFSTop(CephFSTestCase):
                                 '--selftest'])
         self.mgr_cluster.mon_manager.raw_cluster_cmd("mgr", "module", "disable", "stats")
 
-    def test_fstop_json(self):
-        self.mgr_cluster.mon_manager.raw_cluster_cmd("mgr", "module", "enable", "stats")
-        out = self.mount_a.run_shell(['cephfs-top',
-                                      '--id=admin',
-                                      '--dump'])
-        dump_json = out.stdout.getvalue().strip().split('\n')
-        self.mgr_cluster.mon_manager.raw_cluster_cmd("mgr", "module", "disable", "stats")
+#    def test_fstop_json(self):
+#        self.mgr_cluster.mon_manager.raw_cluster_cmd("mgr", "module", "enable", "stats")
+#        out = self.mount_a.run_shell(['cephfs-top',
+#                                      '--id=admin',
+#                                      '--dump'])
+#        dump_json = out.stdout.getvalue().strip().split('\n')
+#        self.mgr_cluster.mon_manager.raw_cluster_cmd("mgr", "module", "disable", "stats")
+#
