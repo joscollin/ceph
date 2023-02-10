@@ -1,9 +1,11 @@
 import logging
 import json
+import sys
 
 from tasks.cephfs.cephfs_test_case import CephFSTestCase
 from teuthology.exceptions import CommandFailedError
 from teuthology.contextutil import safe_while
+from packaging import version
 
 log = logging.getLogger(__name__)
 
@@ -112,3 +114,22 @@ class TestFSTop(CephFSTestCase):
         self.mount_b.mount_wait(cephfs_name=self.fs.name)
 
         self.assertTrue(valid)
+
+    def test_version(self):
+        supported_version_info = {}
+        try:
+            supported_version_info = self.mount_a.run_shell(['cephfs-top',
+                                                            '--id=admin',
+                                                             '--version']).stdout.getvalue()
+        except CommandFailedError:
+            raise RuntimeError('cephfs-top --version failed')
+
+        current_version = f"{sys.version_info.major}" \
+            f".{sys.version_info.minor}" \
+            f".{sys.version_info.micro}"
+        try:
+            if version.parse(current_version) < version.parse(str(json.loads(
+                    supported_version_info).get('version', {}).get('python', {}))):
+                raise RuntimeError('Unsupported python version {current_version}')
+        except version.InvalidVersion:
+            raise RuntimeError("Version check failed")
