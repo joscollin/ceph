@@ -42,6 +42,9 @@ FS_TOP_FS_SELECTED_APP = 'SELECTED_FS_APP'
 # version match b/w fstop and stats emitted by mgr/stats
 FS_TOP_SUPPORTED_VER = 2
 
+# python version which this code needs
+FS_TOP_SUPPORTED_PYTHON_VER = 3.6
+
 ITEMS_PAD_LEN = 3
 ITEMS_PAD = " " * ITEMS_PAD_LEN
 DEFAULT_REFRESH_INTERVAL = 1
@@ -1179,6 +1182,15 @@ class FSTop(FSTopBase):
 
             curses.halfdelay(self.refresh_interval_secs * 10)
             cmd = self.stdscr.getch()
+
+    def dump_version(self):
+        version = {}
+        version_meta = version.setdefault("version", {})
+        version_meta.update({'fstop': FS_TOP_SUPPORTED_VER})
+        version_meta.update({'python': FS_TOP_SUPPORTED_PYTHON_VER})
+        sys.stdout.write(json.dumps(version))
+        sys.stdout.write("\n")
+
 # End class FSTop
 
 
@@ -1209,6 +1221,7 @@ if __name__ == '__main__':
                         help='Dump the metrics to stdout')
     parser.add_argument('--dumpfs', action='append',
                         help='Dump the metrics of the given fs to stdout')
+    parser.add_argument('--version', action='store_true', help='Dump the version info')
 
     args = parser.parse_args()
     err = False
@@ -1222,6 +1235,8 @@ if __name__ == '__main__':
             ft.dump_metrics_to_stdout()
         elif args.dumpfs:
             ft.dump_metrics_to_stdout(args.dumpfs[0])
+        elif args.version:
+            ft.dump_version()
         else:
             curses.wrapper(ft.setup_curses)
     except FSTopException as fst:
