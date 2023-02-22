@@ -38,6 +38,7 @@ class MetricType(Enum):
 FS_TOP_PROG_STR = 'cephfs-top'
 FS_TOP_ALL_FS_APP = 'ALL_FS_APP'
 FS_TOP_FS_SELECTED_APP = 'SELECTED_FS_APP'
+FS_TOP_NO_FS_AVAILABLE = "No filesystem available"
 
 # version match b/w fstop and stats emitted by mgr/stats
 FS_TOP_SUPPORTED_VER = 2
@@ -246,7 +247,7 @@ class FSTopBase(object):
     def dump_metrics_to_stdout(self, fs_name=None):
         fs_list = self.get_fs_names()
         if not fs_list:
-            sys.stdout.write("No filesystem available\n")
+            sys.stdout.write(f"{FS_TOP_NO_FS_AVAILABLE}\n")
         else:
             self.stats_json = self.perf_stats_query()
             if fs_name:  # --dumpfs
@@ -384,7 +385,7 @@ class FSTop(FSTopBase):
     def display_menu(self, stdscr):
         stdscr.clear()
         h, w = stdscr.getmaxyx()
-        title = ['No filesystem available',
+        title = [FS_TOP_NO_FS_AVAILABLE,
                  'Press "q" to go back to home (all filesystem info) screen']
         pos_x1 = w // 2 - len(title[0]) // 2
         pos_x2 = w // 2 - len(title[1]) // 2
@@ -1087,7 +1088,7 @@ class FSTop(FSTopBase):
             stats_json = self.perf_stats_query()
             vscrollEnd = 0
             if not fs_list:
-                help = "INFO: No filesystem is available [Press 'q' to quit]"
+                help = f"INFO: {FS_TOP_NO_FS_AVAILABLE} [Press 'q' to quit]"
                 # reset the sort/limit settings
                 current_states["last_field"] = 'chit'
                 current_states["limit"] = None
