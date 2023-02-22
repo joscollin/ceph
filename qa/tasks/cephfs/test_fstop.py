@@ -28,6 +28,7 @@ class TestFSTop(CephFSTestCase):
     def _fstop_dump(self, *args):
         return self.mount_a.run_shell(['cephfs-top',
                                        '--id=admin',
+                                       '--conffile=/home/jcollin/workspace/ceph/build/ceph.conf',
                                        *args]).stdout.getvalue()
 
     def _get_metrics(self, verifier_callback, trials, *args):
@@ -111,4 +112,18 @@ class TestFSTop(CephFSTestCase):
         self.mount_b.umount_wait()
         self.mount_b.mount_wait(cephfs_name=self.fs.name)
 
+        self.assertTrue(valid)
+
+    def test_no_fs(self):
+        def verify_fstop_metrics(metrics):
+            if metrics == "No filesystem available":
+                return True
+            return False
+
+        self.fs.fail()
+        self.fs.rm()
+
+        # validate
+        valid, metrics = self._get_metrics(verify_fstop_metrics, 30, '--dump')
+        log.debug("metrics={0}".format(metrics))
         self.assertTrue(valid)
