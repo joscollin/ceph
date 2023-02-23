@@ -120,10 +120,19 @@ class TestFSTop(CephFSTestCase):
                 return True
             return False
 
+        data_pools = self.fs.get_data_pool_names(refresh=True)
         self.fs.fail()
         self.fs.rm()
 
         # validate
         valid, metrics = self._get_metrics(verify_fstop_metrics, 30, '--dump')
-        log.debug("metrics={0}".format(metrics))
+        #metrics = self.mount_a.run_shell(['cephfs-top',
+        #                               '--id=admin',
+        #                               '--conffile=/home/jcollin/workspace/ceph/build/ceph.conf',
+        #                               '--dump']).stdout.getvalue()
+        We cannot use self.mount_a at this point as we have rm ed the filesystem.
+        This prevents us from writing this particular test
+
+        self.fs.remove_pools(data_pools)
+        log.info("jos metrics={0}".format(metrics))
         self.assertTrue(valid)
