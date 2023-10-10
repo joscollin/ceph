@@ -13706,7 +13706,7 @@ int Client::_getxattr(Inode *in, const char *name, void *value, size_t size,
     goto out;
   }
 
-  if (!strncmp(name, "ceph.", 5)) {
+  if (!strncmp(name, "ceph.", 5) && strncmp(name, "ceph.mirror.", 12)) { //avoid ceph.mirror attrs
     r = _getvxattr(in, perms, name, size, value, MDS_RANK_NONE);
     goto out;
   }
