@@ -13706,7 +13706,7 @@ int Client::_getxattr(Inode *in, const char *name, void *value, size_t size,
     goto out;
   }
 
-  if (!strncmp(name, "ceph.", 5) && strncmp(name, "ceph.mirror.", 12)) { //avoid ceph.mirror attrs
+  if (!strncmp(name, "ceph.", 5)) {
     r = _getvxattr(in, perms, name, size, value, MDS_RANK_NONE);
     goto out;
   }
@@ -14312,6 +14312,18 @@ size_t Client::_vxattrcb_mirror_info(Inode *in, char *val, size_t size)
                   in->xattrs["ceph.mirror.info.fs_id"].c_str());
 }
 
+size_t Client::_vxattrcb_mirror_dirty_snap_id(Inode *in, char *val, size_t size)
+{
+  return snprintf(val, size, "%.*s",
+		  in->xattrs["ceph.mirror.dirty_snap_id"].length(),
+		  in->xattrs["ceph.mirror.dirty_snap_id"].c_str());
+}
+
+bool Client::_vxattrcb_mirror_dirty_snap_id_exists(Inode *in)
+{
+  return in->xattrs.count("ceph.mirror.dirty_snap_id") != 0;
+}
+
 size_t Client::_vxattrcb_cluster_fsid(Inode *in, char *val, size_t size)
 {
   return snprintf(val, size, "%s", monclient->get_fsid().to_string().c_str());
@@ -14405,6 +14417,13 @@ const Client::VXattr Client::_dir_vxattrs[] = {
     getxattr_cb: &Client::_vxattrcb_mirror_info,
     readonly: false,
     exists_cb: &Client::_vxattrcb_mirror_info_exists,
+    flags: 0,
+  },
+  {
+    name: "ceph.mirror.dirty_snap_id",
+    getxattr_cb: &Client::_vxattrcb_mirror_dirty_snap_id,
+    readonly: false,
+    exists_cb: &Client::_vxattrcb_mirror_dirty_snap_id_exists,
     flags: 0,
   },
   {

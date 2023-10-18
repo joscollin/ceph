@@ -1752,6 +1752,9 @@ private:
   bool _vxattrcb_mirror_info_exists(Inode *in);
   size_t _vxattrcb_mirror_info(Inode *in, char *val, size_t size);
 
+  bool _vxattrcb_mirror_dirty_snap_id_exists(Inode *in);
+  size_t _vxattrcb_mirror_dirty_snap_id(Inode *in, char *val, size_t size);
+
   size_t _vxattrcb_cluster_fsid(Inode *in, char *val, size_t size);
   size_t _vxattrcb_client_id(Inode *in, char *val, size_t size);
 
