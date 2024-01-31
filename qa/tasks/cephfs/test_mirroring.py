@@ -1122,8 +1122,9 @@ class TestMirroring(CephFSTestCase):
         self.mount_a.run_shell(["mkdir", repo_dir])
         clone_repo()
 
+        peer_spec = "client.mirror_remote@ceph"
         self.enable_mirroring(self.primary_fs_name, self.primary_fs_id)
-        self.peer_add(self.primary_fs_name, self.primary_fs_id, "client.mirror_remote@ceph", self.secondary_fs_name)
+        self.peer_add(self.primary_fs_name, self.primary_fs_id, peer_spec, self.secondary_fs_name)
 
         self.add_directory(self.primary_fs_name, self.primary_fs_id, f'/{repo_path}')
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_a'])
@@ -1131,7 +1132,7 @@ class TestMirroring(CephFSTestCase):
         # full copy, takes time
         time.sleep(500)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
-                               "client.mirror_remote@ceph", f'/{repo_path}', 'snap_a', 1)
+                               peer_spec, f'/{repo_path}', 'snap_a', 1)
         self.verify_snapshot(repo_path, 'snap_a')
 
         # create some diff
@@ -1139,15 +1140,33 @@ class TestMirroring(CephFSTestCase):
         log.debug(f'resetting to HEAD~{num}')
         exec_git_cmd(["reset", "--hard", f'HEAD~{num}'])
 
+        # take the second snapshot
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_b'])
 
-        time.sleep(15)
-        self.mount_a.run_shell(['rmdir', f'{repo_path}/.snap/snap_a'])
+        # confirm if sync starts
+        with safe_while(sleep=5, tries=20, action='wait for local_scan start') as proceed:
+            while proceed():
+                try:
+                    # verify via asok
+                    res = self.mirror_daemon_command(f'peer status for fs: {self.primary_fs_name}',
+                                                     'fs', 'mirror', 'peer', 'status',
+                                                     f'{self.primary_fs_name}@{self.primary_fs_id}',
+                                                     self.get_peer_uuid(peer_spec))[f'/{repo_path}']
+                    if res['state'] == "syncing" and 'sync_type' in res:
+                        if res['sync_type'] == "local_scan":
+                            log.debug ("sync_type == local_scan")
+                            break
+                except:
+                    raise RuntimeError('Error getting peer status')
 
+        # wait for a bit to have the sync in progress
+        time.sleep(10)
+        # remove the prev snapshot
+        self.mount_a.run_shell(['rmdir', f'{repo_path}/.snap/snap_a'])
         # incremental copy but based on remote dir_root
         time.sleep(300)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
-                               "client.mirror_remote@ceph", f'/{repo_path}', 'snap_b', 2)
+                               peer_spec, f'/{repo_path}', 'snap_b', 2)
         self.verify_snapshot(repo_path, 'snap_b')
 
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
