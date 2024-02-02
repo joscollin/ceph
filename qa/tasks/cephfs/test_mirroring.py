@@ -1141,8 +1141,10 @@ class TestMirroring(CephFSTestCase):
         exec_git_cmd(["reset", "--hard", f'HEAD~{num}'])
 
         # take the second snapshot
-        self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_b'])
+        expected_name = 'snap_b'
+        self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/{expected_name}'])
 
+        peer_uuid = self.get_peer_uuid(peer_spec)
         # confirm if sync starts
         with safe_while(sleep=5, tries=20, action='wait for local_scan start') as proceed:
             while proceed():
@@ -1151,7 +1153,7 @@ class TestMirroring(CephFSTestCase):
                     res = self.mirror_daemon_command(f'peer status for fs: {self.primary_fs_name}',
                                                      'fs', 'mirror', 'peer', 'status',
                                                      f'{self.primary_fs_name}@{self.primary_fs_id}',
-                                                     self.get_peer_uuid(peer_spec))[f'/{repo_path}']
+                                                     peer_uuid)[f'/{repo_path}']
                     if res['state'] == "syncing" and 'sync_type' in res:
                         if res['sync_type'] == "local_scan":
                             log.debug ("sync_type == local_scan")
@@ -1164,11 +1166,23 @@ class TestMirroring(CephFSTestCase):
         # remove the prev snapshot
         self.mount_a.run_shell(['rmdir', f'{repo_path}/.snap/snap_a'])
         # incremental copy but based on remote dir_root
-        time.sleep(300)
-        self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
-                               peer_spec, f'/{repo_path}', 'snap_b', 2)
-        self.verify_snapshot(repo_path, 'snap_b')
+        # confirm if the sync completed
+        with safe_while(sleep=5, tries=20, action='wait for local_scan start') as proceed:
+            while proceed():
+                try:
+                    # verify via asok
+                    res = self.mirror_daemon_command(f'peer status for fs: {self.primary_fs_name}',
+                                                     'fs', 'mirror', 'peer', 'status',
+                                                     f'{self.primary_fs_name}@{self.primary_fs_id}',
+                                                     peer_uuid)[f'/{repo_path}']
+                    if res['state'] == "idle":
+                        if res['last_synced_snap']['name'] == expected_name and res['snaps_synced'] == 2:
+                            log.debug (f"{expected_name} sync completed.")
+                            break
+                except:
+                    raise RuntimeError('Error getting peer status')
 
+        self.verify_snapshot(repo_path, expected_name)
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
 
     def test_cephfs_mirror_peer_add_primary(self):
