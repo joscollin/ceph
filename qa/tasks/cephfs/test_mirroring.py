@@ -176,10 +176,12 @@ class TestMirroring(CephFSTestCase):
         snap_list = self.mount_b.ls(path=f'{dir_name}/.snap')
         self.assertTrue(snap_name in snap_list)
 
+        self.mount_a.run_shell_payload(f"rm -rf {dir_name}/.snap/{snap_name}/.git")
         source_res = self.mount_a.dir_checksum(path=f'{dir_name}/.snap/{snap_name}',
                                                follow_symlinks=True)
         log.debug(f'source snapshot checksum {snap_name} {source_res}')
 
+        self.mount_b.run_shell_payload(f"rm -rf {dir_name}/.snap/{snap_name}/.git")
         dest_res = self.mount_b.dir_checksum(path=f'{dir_name}/.snap/{snap_name}',
                                              follow_symlinks=True)
         log.debug(f'destination snapshot checksum {snap_name} {dest_res}')
