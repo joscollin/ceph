@@ -1152,6 +1152,7 @@ class TestMirroring(CephFSTestCase):
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_a'])
         self.check_sync_completed(self.primary_fs_name, self.primary_fs_id,
                                   peer_spec, f'/{repo_path}', 'snap_a', 1)
+        time.sleep(3600)
         self.verify_snapshot(repo_path, 'snap_a')
 
         # create some diff
@@ -1184,7 +1185,6 @@ class TestMirroring(CephFSTestCase):
         # confirm if the sync completed
         self.check_sync_completed(self.primary_fs_name, self.primary_fs_id,
                                   peer_spec, f'/{repo_path}', 'snap_b', 2)
-        time.sleep(7200)
         self.verify_snapshot(repo_path, 'snap_b')
         #self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
 
