@@ -591,7 +591,7 @@ class TestMirroring(CephFSTestCase):
         self.remove_directory(self.primary_fs_name, self.primary_fs_id, '/d0')
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
 
-    def test_cephfs_mirror_cancel_sync(self):
+    def test_cephfs_mirror_cancel_full_sync(self):
         log.debug('reconfigure client auth caps')
         self.get_ceph_cmd_result(
             'auth', 'caps', "client.{0}".format(self.mount_b.client_id),
