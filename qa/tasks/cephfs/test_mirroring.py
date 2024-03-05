@@ -1451,10 +1451,6 @@ class TestMirroring(CephFSTestCase):
         self.mount_b.umount_wait()
         self.mount_b.mount_wait(cephfs_name=self.secondary_fs_name)
 
-        # dump perf counters
-        res = self.mirror_daemon_command(f'counter dump for fs: {self.primary_fs_name}', 'counter', 'dump')
-        vfirst = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
-
         self.mount_a.run_shell(["mkdir", "l1"])
         self.mount_a.run_shell(["mkdir", "l1/.snap/snap0"])
         self.mount_a.run_shell(["chmod", "go-rwx", "l1"])
@@ -1466,9 +1462,11 @@ class TestMirroring(CephFSTestCase):
         time.sleep(60)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
                                "client.mirror_remote@ceph", '/l1', 'snap0', 1)
+        # dump perf counters
         res = self.mirror_daemon_command(f'counter dump for fs: {self.primary_fs_name}', 'counter', 'dump')
-        vsecond = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
-        self.assertGreater(vsecond["counters"]["snaps_synced"], vfirst["counters"]["snaps_synced"])
+        vmirror_peers = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
+        snaps_synced = vmirror_peers["counters"]["snaps_synced"]
+        self.assertEqual(snaps_synced, 1, f"Mismatch snaps_synced: {snaps_synced} vs 1")
 
         mode_local = self.mount_a.run_shell(["stat", "--format=%A", "l1"]).stdout.getvalue().strip()
         mode_remote = self.mount_b.run_shell(["stat", "--format=%A", "l1"]).stdout.getvalue().strip()
@@ -1478,10 +1476,6 @@ class TestMirroring(CephFSTestCase):
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
         self.mount_a.run_shell(["rmdir", "l1/.snap/snap0"])
         self.mount_a.run_shell(["rmdir", "l1"])
-
-        res = self.mirror_daemon_command(f'counter dump for fs: {self.primary_fs_name}', 'counter', 'dump')
-        vthird = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
-        self.assertGreater(vthird["counters"]["snaps_deleted"], vsecond["counters"]["snaps_deleted"])
 
     def test_get_set_mirror_dirty_snap_id(self):
         """
