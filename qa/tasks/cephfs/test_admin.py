@@ -21,18 +21,56 @@ class TestLabeledPerfCounters(CephFSTestCase):
     CLIENTS_REQUIRED = 2
     MDSS_REQUIRED = 1
 
-    def test_per_client_labeled_perf_counters(self):
-        """
-        That the per-client labelled perf counters depict the clients
-        performaing IO.
-        """
-        def get_counters_for(filesystem, client_id):
-            dump = self.fs.rank_tell(["counter", "dump"])
-            per_client_metrics_key = f'mds_client_metrics-{filesystem}'
-            counters = [c["counters"] for \
-                        c in dump[per_client_metrics_key] if c["labels"]["client"] == client_id]
+    def get_counters_for(self, filesystem, client_id):
+        dump = self.fs.rank_tell(["counter", "dump"])
+        per_client_metrics_key = f'mds_client_metrics-{filesystem}'
+        counters = [c["counters"] for \
+                    c in dump[per_client_metrics_key] if c["labels"]["client"] == client_id]
+        if counters:
             return counters[0]
 
+    def test_per_client_labeled_perf_counters_on_client_connect(self):
+        """
+        That the per-client labelled metrics are generated during client connect
+        """
+        self.mount_a.umount_wait()
+        self.mount_a.mount_wait(cephfs_name=self.fs.name)
+        with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_a_id}') as proceed:
+            while proceed():
+                if self.get_counters_for(fs_suffix, mount_a_id):
+                    # success, got metrics.
+                    break
+
+    def test_per_client_labeled_perf_counters_on_client_disconnect(self):
+        """
+        That the per-client labelled metrics are unavailable during client disconnect
+        """
+        self.mount_a.umount_wait()
+        with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_a_id}') as proceed:
+            while proceed():
+                if not self.get_counters_for(fs_suffix, mount_a_id):
+                    # success, no metrics.
+                    break
+
+    def test_per_client_labeled_perf_counters_on_client_reconnect(self):
+        """
+        That the per-client labelled metrics are generated during client reconnect
+        """
+        self.fs.fail()
+        self.mount_a.umount_wait(force=True)
+        self.fs.set_joinable()
+        self.fs.wait_for_state('up:active', timeout=self.mds_reconnect_timeout * 2)
+        self.mount_a.mount_wait(cephfs_name=self.fs.name)
+        with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_a_id}') as proceed:
+            while proceed():
+                if self.get_counters_for(fs_suffix, mount_a_id):
+                    # success, got metrics.
+                    break
+
+    def test_per_client_labeled_perf_counters_io(self):
+        """
+        That the per-client labelled perf counters depict the clients performing IO.
+        """
         # sleep a bit so that we get updated clients...
         sleep(10)
 
@@ -53,21 +91,32 @@ class TestLabeledPerfCounters(CephFSTestCase):
         # write workload
         self.mount_a.create_n_files("test_dir/test_file", 1000, sync=True)
         with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_a_id}') as proceed:
-            counters_dump_a = get_counters_for(fs_suffix, mount_a_id)
             while proceed():
-                if counters_dump_a["total_write_ops"] > 0 and counters_dump_a["total_write_size"] > 0:
-                    return True
+                counters_dump_a = self.get_counters_for(fs_suffix, mount_a_id)
+                if counters_dump_a["total_write_ops"] > 0 and counters_dump_a["total_write_size"] > 0 and \
+                   counters_dump_a["avg_write_latency"] >= 0 and counters_dump_a["avg_metadata_latency"] >= 0 and  \
+                   counters_dump_a["opened_files"] >= 0 and counters_dump_a["opened_inodes"] > 0 and \
+                   counters_dump_a["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
+                   counters_dump_a["pinned_icaps"] > 0:
+                    break
 
         # read from the other client
         for i in range(100):
             self.mount_b.open_background(basename=f'test_dir/test_file_{i}', write=False)
         with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_b_id}') as proceed:
-            counters_dump_b = get_counters_for(fs_suffix, mount_b_id)
             while proceed():
-                if counters_dump_b["total_read_ops"] > 0 and counters_dump_b["total_read_size"] > 0:
-                    return True
+                counters_dump_b = self.get_counters_for(fs_suffix, mount_b_id)
+                if counters_dump_b["total_read_ops"] >= 0 and counters_dump_b["total_read_size"] >= 0 and \
+                   counters_dump_b["avg_read_latency"] >= 0 and counters_dump_b["avg_metadata_latency"] >= 0 and \
+                   counters_dump_b["opened_files"] >= 0 and counters_dump_b["opened_inodes"] >= 0 and \
+                   counters_dump_b["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
+                   counters_dump_b["pinned_icaps"] > 0:
+                    break
 
-        self.fs.teardown()
+        self.mount_a.teardown()
+        self.mount_a.mount_wait()
+        self.mount_b.teardown()
+        self.mount_b.mount_wait()
 
 class TestAdminCommands(CephFSTestCase):
     """
