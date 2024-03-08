@@ -76,7 +76,10 @@ class TestLabeledPerfCounters(CephFSTestCase):
                    counters_dump_b["pinned_icaps"] > 0:
                     break
 
-        self.fs.teardown()
+        self.mount_a.teardown()
+        self.mount_a.mount_wait()
+        self.mount_b.teardown()
+        self.mount_b.mount_wait()
 
 class TestAdminCommands(CephFSTestCase):
     """
