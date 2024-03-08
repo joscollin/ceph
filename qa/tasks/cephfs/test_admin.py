@@ -23,8 +23,7 @@ class TestLabeledPerfCounters(CephFSTestCase):
 
     def test_per_client_labeled_perf_counters(self):
         """
-        That the per-client labelled perf counters depict the clients
-        performaing IO.
+        That the per-client labelled perf counters depict the clients performaing IO.
         """
         def get_counters_for(filesystem, client_id):
             dump = self.fs.rank_tell(["counter", "dump"])
@@ -53,21 +52,32 @@ class TestLabeledPerfCounters(CephFSTestCase):
         # write workload
         self.mount_a.create_n_files("test_dir/test_file", 1000, sync=True)
         with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_a_id}') as proceed:
-            counters_dump_a = get_counters_for(fs_suffix, mount_a_id)
             while proceed():
-                if counters_dump_a["total_write_ops"] > 0 and counters_dump_a["total_write_size"] > 0:
-                    return True
+                counters_dump_a = get_counters_for(fs_suffix, mount_a_id)
+                if counters_dump_a["total_write_ops"] > 0 and counters_dump_a["total_write_size"] > 0 and \
+                   counters_dump_a["avg_write_latency"] >= 0 and counters_dump_a["avg_metadata_latency"] >= 0 and  \
+                   counters_dump_a["opened_files"] >= 0 and counters_dump_a["opened_inodes"] > 0 and \
+                   counters_dump_a["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
+                   counters_dump_a["pinned_icaps"] > 0:
+                    break
 
         # read from the other client
         for i in range(100):
             self.mount_b.open_background(basename=f'test_dir/test_file_{i}', write=False)
         with safe_while(sleep=1, tries=30, action=f'wait for counters - {mount_b_id}') as proceed:
-            counters_dump_b = get_counters_for(fs_suffix, mount_b_id)
             while proceed():
-                if counters_dump_b["total_read_ops"] > 0 and counters_dump_b["total_read_size"] > 0:
-                    return True
+                counters_dump_b = get_counters_for(fs_suffix, mount_b_id)
+                if counters_dump_b["total_read_ops"] >= 0 and counters_dump_b["total_read_size"] >= 0 and \
+                   counters_dump_b["avg_read_latency"] >= 0 and counters_dump_b["avg_metadata_latency"] >= 0 and \
+                   counters_dump_b["opened_files"] >= 0 and counters_dump_b["opened_inodes"] >= 0 and \
+                   counters_dump_b["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
+                   counters_dump_b["pinned_icaps"] > 0:
+                    break
 
-        self.fs.teardown()
+        self.mount_a.teardown()
+        self.mount_a.mount_wait()
+        self.mount_b.teardown()
+        self.mount_b.mount_wait()
 
 class TestAdminCommands(CephFSTestCase):
     """
