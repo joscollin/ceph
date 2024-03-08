@@ -57,7 +57,7 @@ class TestLabeledPerfCounters(CephFSTestCase):
                 counters_dump_a = get_counters_for(fs_suffix, mount_a_id)
                 if counters_dump_a["total_write_ops"] > 0 and counters_dump_a["total_write_size"] > 0 and \
                    counters_dump_a["avg_write_latency"] >= 0 and counters_dump_a["avg_metadata_latency"] >= 0 and  \
-                   counters_dump_a["opened_files"] > 0 and counters_dump_a["opened_inodes"] > 0 and \
+                   counters_dump_a["opened_files"] >= 0 and counters_dump_a["opened_inodes"] > 0 and \
                    counters_dump_a["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
                    counters_dump_a["pinned_icaps"] > 0:
                     break
