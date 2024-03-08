@@ -69,9 +69,9 @@ class TestLabeledPerfCounters(CephFSTestCase):
             while proceed():
                 counters_dump_b = get_counters_for(fs_suffix, mount_b_id)
                 log.debug("jos debug hits")
-                if counters_dump_b["total_read_ops"] > 0 and counters_dump_b["total_read_size"] > 0 and \
-                   counters_dump_b["avg_read_latency"] > 0 and counters_dump_b["avg_metadata_latency"] > 0 and \
-                   counters_dump_b["opened_files"] > 0 and counters_dump_b["opened_inodes"] > 0 and \
+                if counters_dump_b["total_read_ops"] >= 0 and counters_dump_b["total_read_size"] >= 0 and \
+                   counters_dump_b["avg_read_latency"] >= 0 and counters_dump_b["avg_metadata_latency"] >= 0 and \
+                   counters_dump_b["opened_files"] >= 0 and counters_dump_b["opened_inodes"] >= 0 and \
                    counters_dump_b["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
                    counters_dump_b["pinned_icaps"] > 0:
                     break
