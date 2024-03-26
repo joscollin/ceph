@@ -231,7 +231,7 @@ class TestMirroring(CephFSTestCase):
                                                  'fs', 'mirror', 'peer', 'status',
                                                  f'{fs_name}@{fs_id}', peer_uuid)
                 if('syncing' == res[dir_name]['state'] and \
-                   res[dir_name]['current_syncing_snap']['name'] == snap_name):
+                   res[dir_name]['current_sycning_snap']['name'] == snap_name):
                     break
 
     def verify_snapshot(self, dir_name, snap_name):
