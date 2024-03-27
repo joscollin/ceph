@@ -81,6 +81,7 @@ class TestFSTop(CephFSTestCase):
         """
         Tests 'cephfs-top --dumpfs' output is valid
         """
+        self._disable_mgr_stats_plugin()
         newfs_name = "cephfs_b"
 
         def verify_fstop_metrics(metrics):
@@ -102,6 +103,7 @@ class TestFSTop(CephFSTestCase):
         # mount cephfs_b on mount_b
         self.mount_b.mount_wait(cephfs_name=fs_b.name)
 
+        self._enable_mgr_stats_plugin()
         # validate
         valid, metrics = self._get_metrics(verify_fstop_metrics, 30,
                                            '--dumpfs={}'.format(newfs_name))
