@@ -137,6 +137,8 @@ class TestLabeledPerfCounters(CephFSTestCase):
                    counters_dump_b["cap_hits"] > 0 and counters_dump_a["dentry_lease_hits"] > 0 and \
                    counters_dump_b["pinned_icaps"] > 0:
                     break
+        self.mount_b.teardown()
+        self.mount_a.teardown()
 
 class TestAdminCommands(CephFSTestCase):
     """
