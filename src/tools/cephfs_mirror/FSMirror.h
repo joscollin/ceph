@@ -11,6 +11,11 @@
 #include "InstanceWatcher.h"
 #include "MirrorWatcher.h"
 
+#define dout_context g_ceph_context
+#define dout_subsys ceph_subsys_cephfs_mirror
+#undef dout_prefix
+#define dout_prefix *_dout << "cephfs::mirror::Mirror " << __func__
+
 class ContextWQ;
 
 namespace cephfs {
@@ -66,6 +71,7 @@ public:
       return m_mirror_watcher->get_failed_ts();
     }
 
+    dout(5) << "get_failed_ts returning clock::now" << dendl;
     return clock::now();
   }
 
@@ -83,6 +89,7 @@ public:
       return m_mirror_watcher->get_blocklisted_ts();
     }
 
+    dout(5) << "get_blocklisted_ts returning clock::now" << dendl;
     return clock::now();
   }
 
