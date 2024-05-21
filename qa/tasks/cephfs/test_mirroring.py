@@ -512,7 +512,7 @@ class TestMirroring(CephFSTestCase):
         self.assertTrue(self.mds_cluster.is_addr_blocklisted(rados_inst))
 
         # wait for restart, which is after 30 seconds timeout
-        time.sleep(60)
+        time.sleep(500)
 
         # get the new rados_inst
         rados_inst_new = ""
