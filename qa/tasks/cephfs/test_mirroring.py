@@ -511,9 +511,12 @@ class TestMirroring(CephFSTestCase):
         # check if the rados addr is blocklisted
         self.assertTrue(self.mds_cluster.is_addr_blocklisted(rados_inst))
 
+        # wait for restart, which is after 30 seconds timeout
+        time.sleep(60)
+
         # get the new rados_inst
         rados_inst_new = ""
-        with safe_while(sleep=1, tries=40, action='wait for mirror status rados_inst') as proceed:
+        with safe_while(sleep=1, tries=30, action='wait for mirror status rados_inst') as proceed:
             while proceed():
                 rados_inst_new = self.get_mirror_rados_addr(self.primary_fs_name, self.primary_fs_id)
                 if rados_inst_new:
