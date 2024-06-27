@@ -35,6 +35,7 @@ class TestMDSMetrics(CephFSTestCase):
         def verify_metrics_cbk(metrics):
             mds_metrics = metrics['metrics']
             if not len(mds_metrics) == active_mds_count + 1: # n active mdss + delayed set
+                log.info("jos hit False1")
                 return False
             fs_status = self.fs.status()
             nonlocal ranks, mul_fs
@@ -46,13 +47,16 @@ class TestMDSMetrics(CephFSTestCase):
             for rank in ranks:
                 r = mds_metrics.get("mds.{}".format(rank), None)
                 if not r or not len(mds_metrics['delayed_ranks']) == 0:
+                log.info("jos hit False2")
                     return False
             for item in mul_fs:
                 key = fs_status.get_fsmap(item)['mdsmap']['fs_name']
                 global_metrics = metrics['global_metrics'].get(key, {})
                 client_metadata = metrics['client_metadata'].get(key, {})
                 if not len(global_metrics) >= client_count or not len(client_metadata) >= client_count:
+                log.info("jos hit False3")
                     return False
+            log.info("jos hit True")
             return True
         return verify_metrics_cbk
 
