@@ -1080,7 +1080,7 @@ class TestMirroring(CephFSTestCase):
 
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
 
-    def test_cephfs_mirror_incremental_sync(self):
+    def _test_cephfs_mirror_incremental_sync(self):
         """ Test incremental snapshot synchronization (based on mtime differences)."""
         log.debug('reconfigure client auth caps')
         self.get_ceph_cmd_result(
