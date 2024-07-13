@@ -855,6 +855,10 @@ class TestMirroring(CephFSTestCase):
         # failing to enable mirroring due to absence of `cephfs_mirror` index object.
 
         self.run_ceph_cmd("fs", "mirror", "enable", self.primary_fs_name)
+
+        # wait for it.
+        time.sleep(500)
+
         # need safe_while since non-failed status pops up as mirroring is restarted
         # internally in mirror daemon.
         with safe_while(sleep=5, tries=20, action='wait for failed state') as proceed:
