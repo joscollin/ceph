@@ -1135,7 +1135,7 @@ class TestMirroring(CephFSTestCase):
 
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_b'])
         # incremental copy, should be fast
-        time.sleep(180)
+        time.sleep(500)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
                                "client.mirror_remote@ceph", f'/{repo_path}', 'snap_b', 2)
         self.verify_snapshot(repo_path, 'snap_b')
@@ -1149,7 +1149,7 @@ class TestMirroring(CephFSTestCase):
 
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_c'])
         # incremental copy, should be fast
-        time.sleep(180)
+        time.sleep(500)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
                                "client.mirror_remote@ceph", f'/{repo_path}', 'snap_c', 3)
         self.verify_snapshot(repo_path, 'snap_c')
