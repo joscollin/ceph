@@ -194,6 +194,16 @@ class TestMirroring(CephFSTestCase):
 
         self.assertLess(vafter["counters"]["directory_count"], vbefore["counters"]["directory_count"])
 
+    def list_directories(self, fs_name, fs_id):
+        self.run_ceph_cmd("fs", "snapshot", "mirror", "ls", fs_name)
+        dirs_list = json.loads(self.get_ceph_cmd_stdout("fs", "snapshot", "mirror", "ls", fs_name))
+
+        # verify via asok
+        res = self.mirror_daemon_command(f'mirror status for fs: {fs_name}',
+                                         'fs', 'mirror', 'status', f'{fs_name}@{fs_id}')
+        dir_count = res['snap_dirs']['dir_count']
+        self.assertTrue(len(dirs_list) == dir_count)
+
     def check_peer_status(self, fs_name, fs_id, peer_spec, dir_name, expected_snap_name,
                           expected_snap_count):
         peer_uuid = self.get_peer_uuid(peer_spec)
@@ -418,6 +428,12 @@ class TestMirroring(CephFSTestCase):
                 raise RuntimeError(-errno.EINVAL, 'incorrect error code when re-deleting a directory')
         else:
             raise RuntimeError(-errno.EINVAL, 'expected directory removal to fail')
+        try:
+            self.list_directories(self.primary_fs_name, self.primary_fs_id)
+        except CommandFailedError:
+            raise RuntimeError('Error listing directories')
+        except AssertionError:
+            raise RuntimeError('Wrong number of directories listed')
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
         self.mount_a.run_shell(["rmdir", "d1"])
 
