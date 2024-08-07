@@ -1508,6 +1508,14 @@ class TestMirroring(CephFSTestCase):
         That making manual changes to the remote .snap directory shows 'peer status' state: "failed"
         for a synced snapshot and then restores to "idle" when those changes are reverted.
         """
+        log.debug('reconfigure client auth caps')
+        self.get_ceph_cmd_result(
+            'auth', 'caps', "client.{0}".format(self.mount_b.client_id),
+            'mds', 'allow rw',
+            'mon', 'allow r',
+            'osd', 'allow rw pool={0}, allow rw pool={1}'.format(
+                self.backup_fs.get_data_pool_name(),
+                self.backup_fs.get_data_pool_name()))
         log.debug(f'mounting filesystem {self.secondary_fs_name}')
         self.mount_b.umount_wait()
         self.mount_b.mount_wait(cephfs_name=self.secondary_fs_name)
@@ -1535,7 +1543,7 @@ class TestMirroring(CephFSTestCase):
         dir_name = f'/{dir_name}'
 
         # create a directory in the remote fs and check status 'failed'
-        self.mount_b.run_shell(['sudo', 'mkdir', remote_snap_path], omit_sudo=False)
+        self.mount_b.run_shell(['sudo', 'mkdir', '-p', remote_snap_path], omit_sudo=False)
         peer_uuid = self.get_peer_uuid(peer_spec)
         with safe_while(sleep=1, tries=60, action=f'wait for failed status: {peer_spec}') as proceed:
             while proceed():
