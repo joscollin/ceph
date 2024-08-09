@@ -1540,10 +1540,11 @@ class TestMirroring(CephFSTestCase):
         remote_snap_name = 'snap_b'
         remote_snap_path = f'{dir_name}/.snap/{remote_snap_name}'
         failure_reason = f"snapshot '{remote_snap_name}' has invalid metadata"
-        dir_name = f'/{dir_name}'
 
         # create a directory in the remote fs and check status 'failed'
-        self.mount_b.run_shell(['sudo', 'mkdir', remote_snap_path], omit_sudo=False)
+        self.mount_b.run_shell(['sudo', 'chown', 'ubuntu:ubuntu', f'{dir_name}/.snap'], omit_sudo=False)
+        self.mount_b.run_shell(['mkdir', remote_snap_path])
+        dir_name = f'/{dir_name}'
         peer_uuid = self.get_peer_uuid(peer_spec)
         with safe_while(sleep=1, tries=60, action=f'wait for failed status: {peer_spec}') as proceed:
             while proceed():
