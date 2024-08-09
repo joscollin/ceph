@@ -1519,9 +1519,9 @@ class TestMirroring(CephFSTestCase):
         log.debug('reconfigure client auth caps')
         self.get_ceph_cmd_result(
             'auth', 'caps', "client.{0}".format(self.mount_b.client_id),
-            'mds', 'allow *',
+            'mds', 'allow rwps',
             'mon', 'allow r',
-            'osd', 'allow * pool={0}, allow * pool={1}'.format(
+            'osd', 'allow rw pool={0}, allow rw pool={1}'.format(
                 self.backup_fs.get_data_pool_name(),
                 self.backup_fs.get_data_pool_name()))
         log.debug(f'mounting filesystem {self.secondary_fs_name}')
