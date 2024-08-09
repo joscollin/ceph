@@ -1519,7 +1519,7 @@ class TestMirroring(CephFSTestCase):
         log.debug('reconfigure client auth caps')
         self.get_ceph_cmd_result(
             'auth', 'caps', "client.{0}".format(self.mount_b.client_id),
-            'mds', 'allow rwps',
+            'mds', 'allow rws path=/d0',
             'mon', 'allow r',
             'osd', 'allow rw pool={0}, allow rw pool={1}'.format(
                 self.backup_fs.get_data_pool_name(),
