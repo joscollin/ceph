@@ -1190,7 +1190,7 @@ class TestMirroring(CephFSTestCase):
 
         self.disable_mirroring(self.primary_fs_name, self.primary_fs_id)
 
-    def test_cephfs_mirror_cancel_mirroring_and_readd(self):
+    def test_aaaa(self):
         """
         Test adding a directory path for synchronization post removal of already added directory paths
 
