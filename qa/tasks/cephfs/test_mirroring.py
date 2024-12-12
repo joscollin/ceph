@@ -1129,7 +1129,7 @@ class TestMirroring(CephFSTestCase):
         log.debug('reconfigure client auth caps')
         self.get_ceph_cmd_result(
             'auth', 'caps', "client.{0}".format(self.mount_b.client_id),
-            'mds', 'allow rw',
+            'mds', 'allow rwps',
             'mon', 'allow r',
             'osd', 'allow rw pool={0}, allow rw pool={1}'.format(
                 self.backup_fs.get_data_pool_name(),
@@ -1200,6 +1200,12 @@ class TestMirroring(CephFSTestCase):
         time.sleep(180)
         self.check_peer_status(self.primary_fs_name, self.primary_fs_id,
                                "client.mirror_remote@ceph", f'/{repo_path}', 'snap_c', 3)
+        # remove git files that differ
+        self.mount_a.run_shell(['rm', '-f', f'{repo_path}/.snap/snap_c/.git/logs/HEAD'])
+        self.mount_a.run_shell(['rm', '-f', f'{repo_path}/.snap/snap_c/.git/logs/refs/heads/giant'])
+        self.mount_b.run_shell(['sudo', 'rm', '-f', f'{repo_path}/.snap/snap_c/.git/logs/HEAD'], omit_sudo=False)
+        self.mount_b.run_shell(['sudo', 'rm', '-f', f'{repo_path}/.snap/snap_c/.git/logs/refs/heads/giant'], omit_sudo=False)
+
         self.verify_snapshot(repo_path, 'snap_c')
         res = self.mirror_daemon_command(f'counter dump for fs: {self.primary_fs_name}', 'counter', 'dump')
         vfourth = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
