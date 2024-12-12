@@ -1172,6 +1172,10 @@ class TestMirroring(CephFSTestCase):
         vsecond = res[TestMirroring.PERF_COUNTER_KEY_NAME_CEPHFS_MIRROR_PEER][0]
         self.assertGreater(vsecond["counters"]["snaps_synced"], vfirst["counters"]["snaps_synced"])
 
+        # save the commit sha
+        commit_sha = self.mount_a.run_shell(['git', '--git-dir', f'{self.mount_a.mountpoint}/{repo_path}/.git',
+                                             'rev-parse', '--short', 'HEAD']).stdout.getvalue().strip()
+
         # create some diff
         num = random.randint(5, 20)
         log.debug(f'resetting to HEAD~{num}')
@@ -1189,7 +1193,7 @@ class TestMirroring(CephFSTestCase):
 
         # diff again, this time back to HEAD
         log.debug('resetting to HEAD')
-        exec_git_cmd(["pull"])
+        exec_git_cmd(["reset", "--hard", commit_sha])
 
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_c'])
         # incremental copy, should be fast
