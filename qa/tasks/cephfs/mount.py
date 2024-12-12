@@ -1632,13 +1632,16 @@ class CephFSMountBase(object):
             "available": int(avail)
         }
 
-    def dir_checksum(self, path=None, follow_symlinks=False):
+    def dir_checksum(self, path=None, follow_symlinks=False, hidden_dir=True):
         cmd = ["find"]
         if follow_symlinks:
             cmd.append("-L")
         if path:
             cmd.append(path)
-        cmd.extend(["-type", "f", "-exec", "md5sum", "{}", "+"])
+        if hidden_dir:
+            cmd.extend(["-type", "f", "-exec", "md5sum", "{}", "+"])
+        else:
+            cmd.extend(["-type", "f", "!", "-path", "*/\.*", "-exec", "md5sum", "{}", "+"])
         checksum_text = self.run_shell(cmd).stdout.getvalue().strip()
         checksum_sorted = sorted(checksum_text.split('\n'), key=lambda v: v.split()[1])
         return hashlib.md5(('\n'.join(checksum_sorted)).encode('utf-8')).hexdigest()
