@@ -1194,6 +1194,7 @@ class TestMirroring(CephFSTestCase):
         # diff again, this time back to HEAD
         log.debug('resetting to HEAD')
         exec_git_cmd(["reset", "--hard", commit_sha])
+        self.mount_a.run_shell(['rm', '-rf', f'{repo_path}/.git/logs'])
 
         self.mount_a.run_shell(['mkdir', f'{repo_path}/.snap/snap_c'])
         # incremental copy, should be fast
