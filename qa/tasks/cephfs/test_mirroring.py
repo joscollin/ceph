@@ -588,8 +588,8 @@ class TestMirroring(CephFSTestCase):
 
         # create a bunch of files in a directory to snap
         self.mount_a.run_shell(["mkdir", "d0"])
-        for i in range(100):
-            self.mount_a.write_n_mb(os.path.join('d0', f'file.{i}'), 1)
+        for i in range(10):
+            self.mount_a.write_n_mb(os.path.join('d0', f'file.{i}'), 1024)
 
         self.enable_mirroring(self.primary_fs_name, self.primary_fs_id)
         self.add_directory(self.primary_fs_name, self.primary_fs_id, '/d0')
@@ -614,11 +614,11 @@ class TestMirroring(CephFSTestCase):
         self.assertGreater(second["counters"]["last_synced_start"], first["counters"]["last_synced_start"])
         self.assertGreater(second["counters"]["last_synced_end"], second["counters"]["last_synced_start"])
         self.assertGreater(second["counters"]["last_synced_duration"], 0)
-        self.assertEquals(second["counters"]["last_synced_bytes"], 104857600) # last_synced_bytes = 100 files of 1MB size each
+        self.assertEquals(second["counters"]["last_synced_bytes"], 10737418240) # last_synced_bytes = 10 files of 1024MB size each
 
         # some more IO
-        for i in range(150):
-            self.mount_a.write_n_mb(os.path.join('d0', f'more_file.{i}'), 1)
+        for i in range(20):
+            self.mount_a.write_n_mb(os.path.join('d0', f'more_file.{i}'), 1024)
 
         time.sleep(60)
 
@@ -637,7 +637,7 @@ class TestMirroring(CephFSTestCase):
         self.assertGreater(third["counters"]["last_synced_start"], second["counters"]["last_synced_end"])
         self.assertGreater(third["counters"]["last_synced_end"], third["counters"]["last_synced_start"])
         self.assertGreater(third["counters"]["last_synced_duration"], 0)
-        self.assertEquals(third["counters"]["last_synced_bytes"], 157286400) # last_synced_bytes = 150 files of 1MB size each
+        self.assertEquals(third["counters"]["last_synced_bytes"], 21474836480) # last_synced_bytes = 20 files of 1024MB size each
 
         # delete a snapshot
         self.mount_a.run_shell(["rmdir", "d0/.snap/snap0"])
