@@ -234,7 +234,7 @@ class Policy:
                 return (tracked_path, what)
         return None
 
-    def add_dir(self, dir_path):
+    def add_dir(self, dir_path, sync_from_snapshot):
         log.debug(f'adding dir_path {dir_path}')
         with self.lock:
             if dir_path in self.dir_states:

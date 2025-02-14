@@ -219,7 +219,7 @@ class FSPolicy:
                 self.notifier.notify(dir_path, message, self.handle_peer_ack)
             self.dir_paths.clear()
 
-    def add_dir(self, dir_path):
+    def add_dir(self, dir_path, sync_from_snapshot):
         with self.lock:
             lookup_info = self.policy.lookup(dir_path)
             if lookup_info:
@@ -227,7 +227,7 @@ class FSPolicy:
                     raise MirrorException(-errno.EAGAIN, f'remove in-progress for {dir_path}')
                 else:
                     raise MirrorException(-errno.EEXIST, f'directory {dir_path} is already tracked')
-            schedule = self.policy.add_dir(dir_path)
+            schedule = self.policy.add_dir(dir_path, sync_from_snapshot)
             if not schedule:
                 return
             update_map = {dir_path: {'version': 1, 'instance_id': '', 'last_shuffled': 0.0}}
@@ -689,7 +689,7 @@ class FSSnapshotMirror:
             raise MirrorException(-errno.EINVAL, f'{dir_path} should be an absolute path')
         return os.path.normpath(dir_path)
 
-    def add_dir(self, filesystem, dir_path):
+    def add_dir(self, filesystem, dir_path, sync_from_snapshot):
         try:
             with self.lock:
                 if not self.filesystem_exist(filesystem):
@@ -699,7 +699,7 @@ class FSSnapshotMirror:
                     raise MirrorException(-errno.EINVAL, f'filesystem {filesystem} is not mirrored')
                 dir_path = FSSnapshotMirror.norm_path(dir_path)
                 log.debug(f'path normalized to {dir_path}')
-                fspolicy.add_dir(dir_path)
+                fspolicy.add_dir(dir_path, sync_from_snapshot)
                 return 0, json.dumps({}), ''
         except MirrorException as me:
             return me.args[0], '', me.args[1]
