@@ -1448,6 +1448,7 @@ inline namespace v14_2_0 {
       const std::map<std::string,std::string>& metadata); ///< static metadata about daemon
     int service_daemon_update_status(
       std::map<std::string,std::string>&& status);
+    int update_daemon_health(std::map<std::string,std::string>&& health);
 
     int pool_create(const char *name);
     int pool_create(const char *name, uint64_t auid)

@@ -220,6 +220,15 @@ void ServiceDaemon::update_status() {
     derr << ": failed to update service daemon status: " << cpp_strerror(r)
          << dendl;
   }
+  m_rados->update_daemon_health(get_health_metrics());
+}
+
+std::map<std::string, std::string> ServiceDaemon::get_health_metrics() {
+
+  const std::map<std::string, std::string> metrics;
+
+  return metrics;
+
 }
 
 } // namespace mirror
