@@ -837,7 +837,7 @@ extern "C" int LIBRADOS_C_API_DEFAULT_F(rados_update_health)(
   std::map<std::string, std::string> health;
   dict_to_map(health_dict, &health);
 
-  return client->update_daemon_health(std::move(health));
+  return client->service_daemon_update_health(std::move(health));
 }
 LIBRADOS_C_API_BASE_DEFAULT(rados_update_health);
 

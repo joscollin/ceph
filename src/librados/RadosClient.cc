@@ -1116,7 +1116,8 @@ int librados::RadosClient::service_daemon_update_status(
   return mgrclient.service_daemon_update_status(std::move(status));
 }
 
-int librados::RadosClient::update_daemon_health(std::map<std::string, std::string>&& health) {
+int librados::RadosClient::service_daemon_update_health(std::map<std::string,
+							std::string>&& health) {
   if (state != CONNECTED) {
     return -ENOTCONN;
   }

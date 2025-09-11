@@ -220,15 +220,20 @@ void ServiceDaemon::update_status() {
     derr << ": failed to update service daemon status: " << cpp_strerror(r)
          << dendl;
   }
-  m_rados->update_daemon_health(get_health_metrics());
+  m_rados->service_daemon_update_health({{"health_json", get_health_metrics()}});
 }
 
-std::map<std::string, std::string> ServiceDaemon::get_health_metrics() {
+std::string ServiceDaemon::get_health_metrics() {
 
-  const std::map<std::string, std::string> metrics;
-
-  return metrics;
-
+  ceph::JSONFormatter f;
+  {
+    std::scoped_lock locker(m_lock);
+    f.open_object_section("health_metrics");
+    f.close_section(); // health_metrics
+  }
+  std::stringstream metrics;
+  f.flush(metrics);
+  return metrics.str();
 }
 
 } // namespace mirror

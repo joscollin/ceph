@@ -54,7 +54,7 @@ private:
 
   void schedule_update_status();
   void update_status();
-  std::map<std::string, std::string> get_health_metrics();
+  std::string get_health_metrics();
 };
 
 } // namespace mirror
