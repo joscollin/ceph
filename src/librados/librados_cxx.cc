@@ -2505,12 +2505,6 @@ int librados::Rados::service_daemon_update_status(
   return client->service_daemon_update_status(std::move(status));
 }
 
-int librados::Rados::service_daemon_update_health(
-  std::map<std::string,std::string>&& health)
-{
-  return client->service_daemon_update_health(std::move(health));
-}
-
 int librados::Rados::pool_create(const char *name)
 {
   string str(name);

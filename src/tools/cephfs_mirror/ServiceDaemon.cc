@@ -40,10 +40,11 @@ struct AttributeDumpVisitor {
 
 } // anonymous namespace
 
-ServiceDaemon::ServiceDaemon(CephContext *cct, RadosRef rados)
+  ServiceDaemon::ServiceDaemon(CephContext *cct, RadosRef rados, Messenger* msgr, MonClient* monc)
   : m_cct(cct),
     m_rados(rados),
-    m_timer(new SafeTimer(cct, m_timer_lock, true)) {
+    m_timer(new SafeTimer(cct, m_timer_lock, true)),
+    mgrc(cct, msgr, &monc->monmap) {
   m_timer->init();
 }
 
@@ -220,7 +221,7 @@ void ServiceDaemon::update_status() {
     derr << ": failed to update service daemon status: " << cpp_strerror(r)
          << dendl;
   }
-  m_rados->service_daemon_update_health({{"health_json", get_health_metrics()}});
+  //mgrc.update_daemon_health({{"health_json", get_health_metrics()}});
 }
 
 std::string ServiceDaemon::get_health_metrics() {
