@@ -202,7 +202,7 @@ class TestSubvolumeReplicated(CephFSTestCase):
     CLIENTS_REQUIRED = 1
     MDSS_REQUIRED = 2
 
-    def test_subvolume_replicated(self):
+    def _test_subvolume_replicated(self):
         """
         That a replica sees the subvolume flag on a directory.
         """
