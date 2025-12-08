@@ -83,13 +83,10 @@ MonClient::MonClient(CephContext *cct_, boost::asio::io_context& service) :
     cct_->_conf.get_val<double>("mon_client_hunt_interval_min_multiple")),
   last_mon_command_tid(0),
   version_req_id(0)
-{
-  cct->_conf.add_observer(this);
-}
+{}
 
 MonClient::~MonClient()
 {
-  cct->_conf.remove_observer(this);
 }
 
 int MonClient::build_initial_monmap()
@@ -906,7 +903,7 @@ bool MonClient::ms_handle_reset(Connection *con)
   }
 }
 
-bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) {
+bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
     break; // TODO
@@ -1730,38 +1727,6 @@ int MonClient::handle_auth_request(
   // discard old challenge
   auth_meta->authorizer_challenge.reset();
   return -EACCES;
-}
-
-const char** MonClient::get_tracked_conf_keys() const {
-  static const char* KEYS[] = {
-    "ms_dispatch_throttle_bytes",
-    "ms_dispatch_throttle_log_interval",
-    "ms_dispatch_throttle_clog_interval",
-    NULL
-  };
-  return KEYS;
-}
-
-void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
-  ldout(cct, 10) << __func__ << " " << changed << dendl;
-  if (changed.count("ms_dispatch_throttle_bytes")) {
-    if (messenger) {
-      messenger->dispatch_throttle_bytes =
-        cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
-    }
-  }
-  if (changed.count("ms_dispatch_throttle_log_interval")) {
-    if (messenger) {
-      messenger->dispatch_throttle_log_interval =
-        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
-    }
-  }
-  if (changed.count("ms_dispatch_throttle_clog_interval")) {
-    if (messenger) {
-      messenger->dispatch_throttle_clog_interval =
-        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_clog_interval");
-    }
-  }
 }
 
 AuthAuthorizer* MonClient::build_authorizer(int service_id) const {

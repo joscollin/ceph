@@ -611,8 +611,6 @@ class TestSessionClientEvict(CephFSTestCase):
         That cluster log a warning when the Dispatch Queue Throttle Limit hits
         """
         self.config_set('global', 'ms_dispatch_throttle_bytes', 500)
-        self.config_set('global', 'ms_dispatch_throttle_log_interval', 5)
-        self.config_set('global', 'ms_dispatch_throttle_clog_interval', 5)
         # Create files & split across 10 directories, 1000 each.
         with self.assert_cluster_log("Throttler Limit has been hit. "
                                      "Some message processing may be significantly delayed.",
