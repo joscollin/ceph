@@ -769,7 +769,7 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
         if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
             configured_interval) {
           //Cluster logging that throttling is occurring.
-          std::map<string, int64_t> throttle_info;
+          std::map<std::string, int64_t> throttle_info;
           throttle_info.insert({"takenslots", connection->dispatch_queue->dispatch_throttler.get_current()});
           throttle_info.insert({"maxslots", connection->dispatch_queue->dispatch_throttler.get_max()});
           throttle_info.insert({"failedrequests", connection->dispatch_queue->dispatch_throttler.get_failed()});

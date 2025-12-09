@@ -2153,7 +2153,7 @@ private:
   bool ms_handle_reset(Connection *con) override;
   void ms_handle_remote_reset(Connection *con) override {}
   bool ms_handle_refused(Connection *con) override;
-  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) override;
+  bool ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) override;
 
  public:
   /* internal and external can point to the same messenger, they will still

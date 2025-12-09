@@ -1660,7 +1660,7 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
       if (configured_interval.count()) {
         if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev) >=
             configured_interval) {
-          ldout(cct, 1) << __func__ << " Throttler Limit has been hit. "
+          ldout(cct, 1) << __func__ << "jos Throttler Limit has been hit. "
                         << "Some message processing may be significantly delayed." << dendl;
           throttle_prev = throttle_now;
         }
@@ -1670,7 +1670,7 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
         if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
             configured_interval) {
           //Cluster logging that throttling is occurring.
-          std::map<string, int64_t> throttle_info;
+          std::map<std::string, int64_t> throttle_info;
           throttle_info.insert({"takenslots", connection->dispatch_queue->dispatch_throttler.get_current()});
           throttle_info.insert({"maxslots", connection->dispatch_queue->dispatch_throttler.get_max()});
           throttle_info.insert({"failedrequests", connection->dispatch_queue->dispatch_throttler.get_failed()});
