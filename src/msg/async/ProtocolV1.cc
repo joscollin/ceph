@@ -770,6 +770,9 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
       }
       return nullptr;
     }
+    else {
+      ldout(cct, 1) << __func__ << "jos hit ProtocolV1::throttle_dispatch_queue" << dendl;
+    }
   }
 
   throttle_stamp = ceph_clock_now();

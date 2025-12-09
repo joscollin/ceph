@@ -83,10 +83,13 @@ MonClient::MonClient(CephContext *cct_, boost::asio::io_context& service) :
     cct_->_conf.get_val<double>("mon_client_hunt_interval_min_multiple")),
   last_mon_command_tid(0),
   version_req_id(0)
-{}
+{
+  cct->_conf.add_observer(this);
+}
 
 MonClient::~MonClient()
 {
+  cct->_conf.remove_observer(this);
 }
 
 int MonClient::build_initial_monmap()
@@ -1727,6 +1730,24 @@ int MonClient::handle_auth_request(
   // discard old challenge
   auth_meta->authorizer_challenge.reset();
   return -EACCES;
+}
+
+std::vector<std::string> MonClient::get_tracked_keys() const noexcept
+{
+  return {
+    "ms_dispatch_throttle_bytes"s
+  };
+}
+
+void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
+  ldout(cct, 10) << __func__ << " " << changed << dendl;
+  if (changed.count("ms_dispatch_throttle_bytes")) {
+    if (messenger) {
+      ldout(cct, 10) << __func__ << " Updating ms_dispatch_throttle_bytes on daemons" << dendl;
+      messenger->dispatch_throttle_bytes =
+        cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
+    }
+  }
 }
 
 AuthAuthorizer* MonClient::build_authorizer(int service_id) const {

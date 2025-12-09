@@ -877,10 +877,10 @@ public:
    *
    * @param ttype Throttle type
    */
-  /*  void ms_deliver_throttle(ms_throttle_t ttype) {
+  void ms_deliver_throttle(ms_throttle_t ttype) {
     std::map<std::string, int64_t> tinfo;
     ms_deliver_throttle(ttype, tinfo);
-    }*/
+  }
 
   /**
    * @} // Dispatcher Interfacing

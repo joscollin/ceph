@@ -1671,6 +1671,11 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
       }
       return nullptr;
     }
+    else {
+      //ldout(cct, 1) << __func__ << "jos hit ProtocolV2::throttle_dispatch_queue: " << msgr->dispatch_throttle_bytes.load() << dendl;
+      //std::map<std::string, int64_t> tinfo;
+      msgr->ms_deliver_throttle(ms_throttle_t::NONE);
+    }
   }
 
   throttle_stamp = ceph_clock_now();

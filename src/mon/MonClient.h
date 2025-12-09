@@ -281,7 +281,8 @@ const boost::system::error_category& monc_category() noexcept;
 class MonClient : public Dispatcher,
 		  public AuthClient,
 		  public AuthServer, /* for mgr, osd, mds */
-		  public AdminSocketHook {
+		  public AdminSocketHook,
+                  public md_config_obs_t {
   static constexpr auto dout_subsys = ceph_subsys_monc;
 public:
   // Error, Newest, Oldest
@@ -423,6 +424,10 @@ public:
     uint32_t auth_method,
     const ceph::buffer::list& bl,
     ceph::buffer::list *reply) override;
+  // md_config_obs_t (config observer)
+  std::vector<std::string> get_tracked_keys() const noexcept override;
+  void handle_conf_change(const ConfigProxy& conf,
+    const std::set<std::string> &changed) override;
 
   void set_entity_name(EntityName name) { entity_name = name; }
   void set_handle_authentication_dispatcher(Dispatcher *d) {
