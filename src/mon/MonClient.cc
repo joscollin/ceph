@@ -906,7 +906,7 @@ bool MonClient::ms_handle_reset(Connection *con)
   }
 }
 
-bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<string, int64_t>& tinfo) {
+bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
     break; // TODO
@@ -1733,17 +1733,16 @@ int MonClient::handle_auth_request(
   return -EACCES;
 }
 
-const char** MonClient::get_tracked_conf_keys() const {
-  static const char* KEYS[] = {
-    "ms_dispatch_throttle_bytes",
-    "ms_dispatch_throttle_log_interval",
-    "ms_dispatch_throttle_clog_interval",
-    NULL
+std::vector<std::string> MonClient::get_tracked_keys() const noexcept {
+  return {
+    "ms_dispatch_throttle_bytes"s,
+    "ms_dispatch_throttle_log_interval"s,
+    "ms_dispatch_throttle_clog_interval"s
   };
-  return KEYS;
 }
 
-void MonClient::handle_conf_change(const ConfigProxy& conf, const std::set<std::string> &changed) {
+void MonClient::handle_conf_change(const ConfigProxy& conf,
+                                      const std::set <std::string> &changed) {
   ldout(cct, 10) << __func__ << " " << changed << dendl;
   if (changed.count("ms_dispatch_throttle_bytes")) {
     if (messenger) {
