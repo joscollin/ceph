@@ -1655,17 +1655,8 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
           << connection->dispatch_queue->dispatch_throttler.get_current() << "/"
           << connection->dispatch_queue->dispatch_throttler.get_max()
           << " failed, just wait." << dendl;
-      std::chrono::seconds configured_interval = msgr->dispatch_throttle_log_interval.load();
       ceph::coarse_mono_time throttle_now = ceph::coarse_mono_clock::now();
-      if (configured_interval.count()) {
-        if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev) >=
-            configured_interval) {
-          ldout(cct, 1) << __func__ << "Throttler Limit has been hit. "
-                        << "Some message processing may be significantly delayed." << dendl;
-          throttle_prev = throttle_now;
-        }
-      }
-      configured_interval = msgr->dispatch_throttle_clog_interval.load();
+      std::chrono::seconds configured_interval = msgr->dispatch_throttle_clog_interval.load();
       if (configured_interval.count()) {
         if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
             configured_interval) {
@@ -1692,7 +1683,8 @@ CtPtr ProtocolV2::throttle_dispatch_queue() {
       //since the last ms_throttle_t::DISPATCH_QUEUE delivery.
       if (std::chrono::duration_cast<std::chrono::seconds>
           (ceph::coarse_mono_clock::now() - throttle_prev_clog) <= THROTTLE_DELIVER_INTERVAL) {
-        msgr->ms_deliver_throttle(ms_throttle_t::NONE);
+        std::map<std::string, int64_t> throttle_info;
+        msgr->ms_deliver_throttle(ms_throttle_t::NONE, throttle_info);
       }
     }
   }

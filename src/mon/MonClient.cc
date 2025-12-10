@@ -1736,7 +1736,6 @@ int MonClient::handle_auth_request(
 std::vector<std::string> MonClient::get_tracked_keys() const noexcept {
   return {
     "ms_dispatch_throttle_bytes"s,
-    "ms_dispatch_throttle_log_interval"s,
     "ms_dispatch_throttle_clog_interval"s
   };
 }
@@ -1748,12 +1747,6 @@ void MonClient::handle_conf_change(const ConfigProxy& conf,
     if (messenger) {
       messenger->dispatch_throttle_bytes =
         cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
-    }
-  }
-  if (changed.count("ms_dispatch_throttle_log_interval")) {
-    if (messenger) {
-      messenger->dispatch_throttle_log_interval =
-        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
     }
   }
   if (changed.count("ms_dispatch_throttle_clog_interval")) {

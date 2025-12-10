@@ -141,7 +141,6 @@ public:
   AuthClient *auth_client = 0;
   AuthServer *auth_server = 0;
   std::atomic<uint64_t> dispatch_throttle_bytes;
-  std::atomic<std::chrono::seconds> dispatch_throttle_log_interval;
   std::atomic<std::chrono::seconds> dispatch_throttle_clog_interval;
 
 #ifdef UNIT_TESTS_BUILT
@@ -871,17 +870,6 @@ public:
     for ([[maybe_unused]] const auto& [priority, dispatcher] : dispatchers) {
       dispatcher->ms_handle_throttle(ttype, tinfo);
     }
-  }
-
-  /**
-   * Calls ms_deliver_throttle with empty tinfo.
-   * Call this function for a reset status update that doesn't need tinfo.
-   *
-   * @param ttype Throttle type
-   */
-  void ms_deliver_throttle(ms_throttle_t ttype) {
-    std::map<std::string, int64_t> tinfo;
-    ms_deliver_throttle(ttype, tinfo);
   }
 
   /**
