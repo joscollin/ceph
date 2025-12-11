@@ -906,7 +906,7 @@ bool MonClient::ms_handle_reset(Connection *con)
   }
 }
 
-bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) {
+bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const ThrottleInfo& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
     break; // TODO
@@ -921,9 +921,9 @@ bool MonClient::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::stri
       LogChannelRef clog = log_client->create_channel(CLOG_CHANNEL_CLUSTER);
       clog->warn() << "Throttler Limit has been hit. "
                    << "Some message processing may be significantly delayed. "
-                   << "Additional info: " << tinfo.at("takenslots") << "/"
-                   << tinfo.at("maxslots") << " bytes used, "
-                   << tinfo.at("failedrequests") << " messages throttled.";
+                   << "Additional info: " << tinfo.takenslots << "/"
+                   << tinfo.maxslots << " bytes used, "
+                   << tinfo.failedrequests << " messages throttled.";
     }
     break;
   case ms_throttle_t::NONE:
@@ -1736,7 +1736,7 @@ int MonClient::handle_auth_request(
 std::vector<std::string> MonClient::get_tracked_keys() const noexcept {
   return {
     "ms_dispatch_throttle_bytes"s,
-    "ms_dispatch_throttle_clog_interval"s
+    "ms_dispatch_throttle_log_interval"s
   };
 }
 
@@ -1749,10 +1749,10 @@ void MonClient::handle_conf_change(const ConfigProxy& conf,
         cct->_conf.get_val<Option::size_t>("ms_dispatch_throttle_bytes");
     }
   }
-  if (changed.count("ms_dispatch_throttle_clog_interval")) {
+  if (changed.count("ms_dispatch_throttle_log_interval")) {
     if (messenger) {
-      messenger->dispatch_throttle_clog_interval =
-        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_clog_interval");
+      messenger->dispatch_throttle_log_interval =
+        cct->_conf.get_val<std::chrono::seconds>("ms_dispatch_throttle_log_interval");
     }
   }
 }

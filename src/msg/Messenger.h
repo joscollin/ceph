@@ -141,7 +141,7 @@ public:
   AuthClient *auth_client = 0;
   AuthServer *auth_server = 0;
   std::atomic<uint64_t> dispatch_throttle_bytes;
-  std::atomic<std::chrono::seconds> dispatch_throttle_clog_interval;
+  std::atomic<std::chrono::seconds> dispatch_throttle_log_interval;
 
 #ifdef UNIT_TESTS_BUILT
   Interceptor *interceptor = nullptr;
@@ -866,7 +866,7 @@ public:
    * @param ttype Throttle type
    * @param tinfo Throttle info
    */
-  void ms_deliver_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) {
+  void ms_deliver_throttle(ms_throttle_t ttype, const Dispatcher::ThrottleInfo& tinfo) {
     for ([[maybe_unused]] const auto& [priority, dispatcher] : dispatchers) {
       dispatcher->ms_handle_throttle(ttype, tinfo);
     }

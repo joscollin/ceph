@@ -748,24 +748,28 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
 
     if (!connection->dispatch_queue->dispatch_throttler.get_or_fail(
             cur_msg_size)) {
-      ldout(cct, 1)
+      ldout(cct, 0)
           << __func__ << " wants " << cur_msg_size
           << " bytes from dispatch throttle "
           << connection->dispatch_queue->dispatch_throttler.get_current() << "/"
           << connection->dispatch_queue->dispatch_throttler.get_max()
           << " failed, just wait." << dendl;
       ceph::coarse_mono_time throttle_now = ceph::coarse_mono_clock::now();
-      std::chrono::seconds configured_interval = msgr->dispatch_throttle_clog_interval.load();
+      std::chrono::seconds configured_interval = msgr->dispatch_throttle_log_interval.load();
       if (configured_interval.count()) {
-        if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_clog) >=
+        if (std::chrono::duration_cast<std::chrono::seconds>(throttle_now - throttle_prev_log) >=
             configured_interval) {
           //Cluster logging that throttling is occurring.
-          std::map<std::string, int64_t> throttle_info;
-          throttle_info.insert({"takenslots", connection->dispatch_queue->dispatch_throttler.get_current()});
-          throttle_info.insert({"maxslots", connection->dispatch_queue->dispatch_throttler.get_max()});
-          throttle_info.insert({"failedrequests", connection->dispatch_queue->dispatch_throttler.get_failed()});
-          msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE, throttle_info);
-          throttle_prev_clog = throttle_now;
+          //std::map<std::string, int64_t> throttle_info;
+          //throttle_info.insert({"takenslots", connection->dispatch_queue->dispatch_throttler.get_current()});
+          //throttle_info.insert({"maxslots", connection->dispatch_queue->dispatch_throttler.get_max()});
+          //throttle_info.insert({"failedrequests", connection->dispatch_queue->dispatch_throttler.get_failed()});
+          Dispatcher::ThrottleInfo tinfo;
+          tinfo.takenslots = connection->dispatch_queue->dispatch_throttler.get_current();
+          tinfo.maxslots = connection->dispatch_queue->dispatch_throttler.get_max();
+          tinfo.failedrequests = connection->dispatch_queue->dispatch_throttler.get_failed();
+          msgr->ms_deliver_throttle(ms_throttle_t::DISPATCH_QUEUE, tinfo);
+          throttle_prev_log = throttle_now;
         }
       }
       // following thread pool deal with th full message queue isn't a
@@ -781,9 +785,9 @@ CtPtr ProtocolV1::throttle_dispatch_queue() {
       //Don't deliver ms_throttle_t::NONE forever. Limit it for THROTTLE_DELIVER_INTERVAL seconds
       //since the last ms_throttle_t::DISPATCH_QUEUE delivery.
       if (std::chrono::duration_cast<std::chrono::seconds>
-          (ceph::coarse_mono_clock::now() - throttle_prev_clog) <= THROTTLE_DELIVER_INTERVAL) {
-          std::map<std::string, int64_t> throttle_info;
-          msgr->ms_deliver_throttle(ms_throttle_t::NONE, throttle_info);
+          (ceph::coarse_mono_clock::now() - throttle_prev_log) <= THROTTLE_DELIVER_INTERVAL) {
+        Dispatcher::ThrottleInfo tinfo = {0, 0, 0};
+        msgr->ms_deliver_throttle(ms_throttle_t::NONE, tinfo);
       }
     }
   }

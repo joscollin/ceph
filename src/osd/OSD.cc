@@ -6832,7 +6832,7 @@ bool OSD::ms_handle_refused(Connection *con)
   return true;
 }
 
-bool OSD::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, int64_t>& tinfo) {
+bool OSD::ms_handle_throttle(ms_throttle_t ttype, const ThrottleInfo& tinfo) {
   switch (ttype) {
   case ms_throttle_t::MESSAGE:
     break; // TODO
@@ -6842,7 +6842,7 @@ bool OSD::ms_handle_throttle(ms_throttle_t ttype, const std::map<std::string, in
     {
       //save the latest throttled time, save the number of messages throttled.
       last_throttled.store(ceph::coarse_mono_clock::now());
-      messages_throttled.store(tinfo.at("failedrequests"));
+      messages_throttled.store(tinfo.failedrequests);
     }
     break;
   case ms_throttle_t::NONE:
