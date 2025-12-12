@@ -6841,6 +6841,7 @@ bool OSD::ms_handle_throttle(ms_throttle_t ttype, const ThrottleInfo& tinfo) {
   case ms_throttle_t::DISPATCH_QUEUE:
     {
       //save the latest throttled time, save the number of messages throttled.
+      std::lock_guard l(dispatch_queue_throttle_lock);
       last_throttled.store(ceph::coarse_mono_clock::now());
       messages_throttled.store(tinfo.failedrequests);
     }
@@ -6848,6 +6849,7 @@ bool OSD::ms_handle_throttle(ms_throttle_t ttype, const ThrottleInfo& tinfo) {
   case ms_throttle_t::NONE:
     {
       //No Throttling
+      std::lock_guard l(dispatch_queue_throttle_lock);
       if (last_throttled.load() != ceph::coarse_mono_clock::zero()) {
         //Don't be hurry to reset last_throttled. Give get_health_metrics()
         //THROTTLE_STATUS_INTERVAL seconds to read and display the previous status.
@@ -8058,6 +8060,7 @@ vector<DaemonHealthMetric> OSD::get_health_metrics()
     metrics.emplace_back(daemon_metric::PENDING_CREATING_PGS, n_primaries);
   }
   {
+    std::lock_guard l(dispatch_queue_throttle_lock);
     if (last_throttled.load() != ceph::coarse_mono_clock::zero()) {
       metrics.emplace_back(daemon_metric::DISPATCH_QUEUE_THROTTLE, messages_throttled.load());
     }
