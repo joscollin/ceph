@@ -2807,9 +2807,8 @@ void Server::dispatch_client_request(const MDRequestRef& mdr)
       last_warn = now;
     }
 
-    dout(1) << __func__ << ": journal size exceeds hard limit (" << mdlog->get_num_segments()
-            << " segments), freezing non-read-only operations" << dendl;
-    respond_to_request(mdr, -ENOSPC);
+    dout(1) << __func__ << ": journal hard limit reached, blocking request" << dendl;
+    mdlog->wait_for_trim(new C_MDS_RetryRequest(mdcache, mdr));
     return;
   }
 
