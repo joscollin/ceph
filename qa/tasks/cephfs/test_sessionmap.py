@@ -302,11 +302,11 @@ class TestSessionMap(CephFSTestCase):
 
         # 3. Execute the Hard Crash via SIGKILL
         log.info("Sending SIGKILL to active MDS to orphan the journal flush...")
-        active_mds = self.fs.get_active_mds()
 
-        # We must use kill=True to simulate a power loss / ungraceful crash.
-        # A normal stop() would cleanly flush the journal and mask the bug.
-        self.fs.daemons['mds'][active_mds].stop(kill=True)
+        active_mds = self.fs.get_active_names()[0]
+
+        # Send SIGKILL (9) directly to rank 0
+        self.fs.rank_signal(9, rank=0)
 
         # Clean up the orphaned client process from the test runner
         try:
